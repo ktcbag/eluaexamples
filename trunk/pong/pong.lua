@@ -1,14 +1,22 @@
 -------------------------------------------------------------------------------
--------------------------------------------------------------------------------
 --
 --		eLua Pong Game
 --
+-- LED Lab @ PUC-Rio - 2009
+--   Dado Sutter
+--   Ives Negreiros
+--   Ricardo Rosa
+--   Pedro Bittencourt
+--   Teo Benjamin
+-- 
+
+-- Initial Version by Dado Sutter, Fev 2009
+--    This has only the ball and paddle movement
+--	
+-- Greatly enhanced by Teo Benjamin, adding:
+--    Score, resizeable paddles, levels/speeds, 
 --
---													LED Lab @ PUC-Rio
---																2009
---
---											Téo, Dado, Ives, Ricardo & Barmak
--------------------------------------------------------------------------------
+--		
 -------------------------------------------------------------------------------
 
 
