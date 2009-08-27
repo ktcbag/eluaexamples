@@ -7,6 +7,7 @@
 --   Ives Negreiros
 --   Ricardo Rosa
 --   Pedro Bittencourt
+--   Rafael Barmak
 --   Teo Benjamin
 -- 
 
@@ -101,13 +102,13 @@ function printData()
 end
 
 function drawpiece()
-	for i in ipairs( piecemap ) do
-		for j in ipairs( piecemap[ i ] ) do
-			if( piecemap[ i ][ j ] == 1) then
-				disp.print("*", (PieceV+i-1)*6, (PieceH+j-1)*6, 11)
-			end
-		end
-	end
+  for i in ipairs( piecemap ) do
+    for j in ipairs( piecemap[ i ] ) do
+      if( piecemap[ i ][ j ] == 1) then
+        disp.print("*", (PieceV+i-1)*6, (PieceH+j-1)*6, 11)
+      end
+    end
+  end
 end
 
 function erasepiece()
@@ -201,7 +202,7 @@ function rotate()
 				end
 			end
 		end
-		if(free ==4) then
+		if(free == 4) then
 			RotateType = 2
 			for i in ipairs(piecemap) do
 				for j in ipairs(piecemap[ i ] ) do
@@ -221,7 +222,7 @@ function rotate()
 				end
 			end
 		end
-		if(free ==4) then
+		if(free == 4) then
 			RotateType = 1
 			for i in ipairs(piecemap) do
 				for j in ipairs(piecemap[ i ] ) do
@@ -241,7 +242,7 @@ function rotate()
 				end
 			end
 		end
-		if(free ==4) then
+		if(free == 4) then
 			for i in ipairs(piecemap) do
 				for j in ipairs(piecemap[ i ] ) do
 					piecerot[i][j] = piecemap[j][4-i]
