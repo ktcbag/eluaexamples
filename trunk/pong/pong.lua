@@ -11,7 +11,7 @@
 -- 
 
 -- Initial Version by Dado Sutter, Fev 2009
---    This has only the ball and paddle movement
+--    This had only the ball bouncing on walls, paddle and paddle movement
 --	
 -- Greatly enhanced by Teo Benjamin, adding:
 --    Score, resizeable paddles, levels/speeds, 
