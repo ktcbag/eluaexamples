@@ -19,18 +19,19 @@
 --		
 -------------------------------------------------------------------------------
 
+require( pd.platform() )
 
-local itens = {}
+local items = {}
 local pressed = {}
 
 local itemFunction = {
 ["L"] = function ()
-  	drawPaddle( py, 0, 0 )
-  	if pSize < pSizeMax then
-  		pSize = pSize + 1
-  	end
-  	drawPaddle( py, 11, 0 )
-	end,
+          drawPaddle( py, 0, 0 )
+          if pSize < pSizeMax then
+            pSize = pSize + 1
+          end
+          drawPaddle( py, 11, 0 )
+        end,
 ["S"] = function ()
   	drawPaddle( py, 0, 0 )
   	if pSize > pSizeMin then
@@ -40,7 +41,7 @@ local itemFunction = {
 	end,
 
 ["?"] = function ()
-		item = itens[ math.random( #itens ) ]
+		item = items[ math.random( #items ) ]
   	useItem()
   end,
 
@@ -56,14 +57,14 @@ local itemFunction = {
   end,
 
 ["Z"] = function ()
-  	disp.print( tostring( score ), 111, 89, 0 )
+  	lm3s.disp.print( tostring( score ), 111, 89, 0 )
   	score = 0
   end,
 
 ["T"] = function ()
-		disp.print( ball, bx, by, 0 )
+		lm3s.disp.print( ball, bx, by, 0 )
 		by = math.random( 82 )
-		disp.print( ball, bx, by, 15 )
+		lm3s.disp.print( ball, bx, by, 15 )
 	end,
 ["F"] = function()
 		if delayTime >= 1000 then
@@ -72,24 +73,23 @@ local itemFunction = {
 	end,
 }
 
-require( pd.platform() )
 
 -- Menu Funcions
 -- If you have enough memory, use this part. If not, forget it.
 --[[
 function menu()
 	tmr.delay( 0, 150000 )
-	disp.clear()
+	lm3s.disp.clear()
   local cursorPos = 1
 	local cursorChange = 0
-	disp.print("Play", 30, 35, 10 )
-	disp.print("Instructions", 30, 50, 10 )
-	disp.print("Credits", 30, 65, 10 )
+	lm3s.disp.print("Play", 30, 35, 10 )
+	lm3s.disp.print("Instructions", 30, 50, 10 )
+	lm3s.disp.print("Credits", 30, 65, 10 )
 	for i = 1, 3, 1 do
 			if i == cursorPos then
-				disp.print("*", 22, 20 + ( 15*i ), 10 )
+				lm3s.disp.print("*", 22, 20 + ( 15*i ), 10 )
 			else
-				disp.print("*", 22, 20 + ( 15*i ), 0 )
+				lm3s.disp.print("*", 22, 20 + ( 15*i ), 0 )
 			end
 	end
 
@@ -115,9 +115,9 @@ function menu()
     end
     for i = 1, 3, 1 do
 			if i == cursorPos then
-				disp.print("*", 22, 20 + ( 15*i ), 10 )
+				lm3s.disp.print("*", 22, 20 + ( 15*i ), 10 )
 			else
-				disp.print("*", 22, 20 + ( 15*i ), 0 )
+				lm3s.disp.print("*", 22, 20 + ( 15*i ), 0 )
 			end
 		end
 		collectgarbage("collect")
@@ -135,21 +135,21 @@ end
 function Instructions()
 	local InstrPage = 1
 	local pageChange = 0
-	disp.clear()
+	lm3s.disp.clear()
 	tmr.delay( 0, 150000 )
 	while ( ( LM3S.btnpressed( LM3S.BTN_SELECT ) ) == false ) do
 		if InstrPage == 1 then
-			disp.print("L- Large", 5, 10, 10 )
-			disp.print("S- Small", 5, 20, 10 )
-			disp.print("Z- Points = Zero", 5, 30, 10 )
-			disp.print("?- Random", 5, 40, 10 )
-			disp.print("*- Nothing!", 5, 50, 10 )
+			lm3s.disp.print("L- Large", 5, 10, 10 )
+			lm3s.disp.print("S- Small", 5, 20, 10 )
+			lm3s.disp.print("Z- Points = Zero", 5, 30, 10 )
+			lm3s.disp.print("?- Random", 5, 40, 10 )
+			lm3s.disp.print("*- Nothing!", 5, 50, 10 )
 			collectgarbage("collect")
 		elseif InstrPage == 2 then
-			disp.print("F- Faster", 8, 10, 10 )
-			disp.print("T- Teleport", 8, 20, 10 )
-			disp.print("D- Double Points", 8, 30, 10 )
-			disp.print("P- More Points", 8, 40, 10 )
+			lm3s.disp.print("F- Faster", 8, 10, 10 )
+			lm3s.disp.print("T- Teleport", 8, 20, 10 )
+			lm3s.disp.print("D- Double Points", 8, 30, 10 )
+			lm3s.disp.print("P- More Points", 8, 40, 10 )
 		end
 		if pageChange == 0 then
 			tmr.delay( 0, 75000 )
@@ -168,7 +168,7 @@ function Instructions()
       	end
       	pageChange = 0
       	tmr.delay( 0, 75000 )
-  			disp.clear()
+  			lm3s.disp.clear()
     	end
     end
 		collectgarbage("collect")
@@ -178,14 +178,14 @@ end
 
 function Credits()
 	tmr.delay( 0, 150000 )
-	disp.clear()
-		disp.print("eLua Pong is a game", 8, 10, 10 )
-		disp.print("designed by LED Lab", 8, 20, 10 )
-		disp.print("Teo,", 5, 30, 10 )
-		disp.print("Dado,", 5, 40, 10 )
-		disp.print("Ives,", 5, 50, 10 )
-		disp.print("Ricardo", 5, 60, 10 )
-		disp.print("Have fun with eLua :)", 0, 80, 10 )
+	lm3s.disp.clear()
+		lm3s.disp.print("eLua Pong is a game", 8, 10, 10 )
+		lm3s.disp.print("designed by LED Lab", 8, 20, 10 )
+		lm3s.disp.print("Teo,", 5, 30, 10 )
+		lm3s.disp.print("Dado,", 5, 40, 10 )
+		lm3s.disp.print("Ives,", 5, 50, 10 )
+		lm3s.disp.print("Ricardo", 5, 60, 10 )
+		lm3s.disp.print("Have fun with eLua :)", 0, 80, 10 )
 		collectgarbage("collect")
 	while ( ( LM3S.btnpressed( LM3S.BTN_SELECT ) ) == false ) do
 	end
@@ -197,25 +197,25 @@ end
 
 -- Paddle functions
 function drawPaddle( y, color, movement )
-	if ( movement == 0 ) then
-		for i = 0, pSize, 1 do
-  		disp.print("|", 0, y + ( i * 6 ),  color)
-		end
-	elseif ( movement > 0 ) then			-- Paddle moving Down
-		if y < 8 then
-			disp.print("|", 0, 0,  0)
-		else
-			disp.print("|", 0, y - 8 , 0)
-		end
-		for i = 0, pSize, 1 do
-			disp.print("|", 0, y + ( i * 6 ),  color)
-		end
-	elseif ( movement < 0 ) then		-- Paddle moving Up
-		disp.print("|", 0, y + ( ( pSize + 1 ) * 6 ) + 2 , 0)
-		for i = 0, pSize, 1 do
-			disp.print("|", 0, y + ( i * 6 ),  color)
-		end
-	end
+  if ( movement == 0 ) then
+    for i = 0, pSize, 1 do
+      lm3s.disp.print("|", 0, y + ( i * 6 ),  color)
+    end
+  elseif ( movement > 0 ) then			-- Paddle moving Down
+    if y < 8 then
+      lm3s.disp.print("|", 0, 0,  0)
+    else
+      lm3s.disp.print("|", 0, y - 8 , 0)
+    end
+    for i = 0, pSize, 1 do
+      lm3s.disp.print("|", 0, y + ( i * 6 ),  color)
+    end
+  elseif ( movement < 0 ) then		-- Paddle moving Up
+    lm3s.disp.print("|", 0, y + ( ( pSize + 1 ) * 6 ) + 2 , 0)
+    for i = 0, pSize, 1 do
+      lm3s.disp.print("|", 0, y + ( i * 6 ),  color)
+    end
+  end
 end
 
 function updatePaddlePos()
@@ -251,34 +251,34 @@ function updateBallPos()
   if(( by >= 90 - dy ) or ( by <= 1 - dy )) then
     dy = -dy;
   end
-  disp.print( ball, bx, by, 0 )
+  lm3s.disp.print( ball, bx, by, 0 )
   bx, by = ( bx + dx ), ( by + dy );
-  disp.print( ball, bx, by, 15 )
+  lm3s.disp.print( ball, bx, by, 15 )
 end
 
 
 
 function drawWall( x, y )
 	for i = 0, y, 7 do
-  	disp.print( "|", xcanvas + 1, i, 0 )
+  	lm3s.disp.print( "|", xcanvas + 1, i, 0 )
   end
   xcanvas = x
   for i = 0, y, 7 do
-  	disp.print( "|", xcanvas + 1, i, 6 )
+  	lm3s.disp.print( "|", xcanvas + 1, i, 6 )
   end
 
 end
 
 -- Item Functions
 function createItem()
-	item = itens[ math.random( #itens ) ]
+	item = items[ math.random( #items ) ]
 	ix = xcanvas - 10
 	iy = by
 end
 
-function uploadItens()
+function uploaditems()
 	for k,v in pairs( itemFunction ) do
-		table.insert( itens, k )
+		table.insert( items, k )
 	end
 end
 
@@ -288,13 +288,13 @@ function updateItemPos()
     	if ( ( iy + 8 < py ) or ( iy > py + ( pSize*6 ) + 8 ) ) == false then
     		useItem()
 			end
-  		disp.print( item, ix, iy, 0 )
+  		lm3s.disp.print( item, ix, iy, 0 )
   		item = false
   		return
   	end
-  	disp.print( item, ix, iy, 0 )
+  	lm3s.disp.print( item, ix, iy, 0 )
   	ix = ix - 2
-  	disp.print( item, ix, iy, 10 )
+  	lm3s.disp.print( item, ix, iy, 10 )
 	end
 end
 
@@ -320,8 +320,8 @@ end
 ------------ MAIN ------------
 --lm3s_init()
 
-uploadItens()
-disp.init( 1000000 )
+uploaditems()
+lm3s.disp.init( 1000000 )
 tmr.start( 1 )
 --menu()
 
@@ -355,11 +355,11 @@ repeat
 
 
 
-  disp.clear()
+  lm3s.disp.clear()
   drawPaddle( py, 11, 0 )
 
   for i = 0, ycanvas, 7 do
-  	disp.print( "|", xcanvas + 1, i, 6 )
+  	lm3s.disp.print( "|", xcanvas + 1, i, 6 )
   end
 
   while ( true ) do
@@ -394,9 +394,9 @@ repeat
   	end
 
 
-    disp.print( tostring( dscore ), 118, 0, 6 )
-    disp.print( tostring( score ), 111, 89, 6 )
-	collectgarbage("collect")
+    lm3s.disp.print( tostring( dscore ), 118, 0, 6 )
+    lm3s.disp.print( tostring( score ), 111, 89, 6 )
+    collectgarbage("collect")
   end
 -------------------------------------------
 -- End of Game
@@ -405,11 +405,11 @@ repeat
     highscore = score
   end
 
-  disp.clear()
-  disp.print( "Game Over :(", 30, 20, 11 )
-  disp.print( "Your score was "..tostring(score), 15, 40, 11 )
-  disp.print( "Highscore: "..tostring(highscore), 15, 50, 11 )
-  disp.print( "SELECT to restart", 6, 70, 11 )
+  lm3s.disp.clear()
+  lm3s.disp.print( "Game Over :(", 30, 20, 11 )
+  lm3s.disp.print( "Your score was "..tostring(score), 15, 40, 11 )
+  lm3s.disp.print( "Highscore: "..tostring(highscore), 15, 50, 11 )
+  lm3s.disp.print( "SELECT to restart", 6, 70, 11 )
   enough = true
   for i=1, 100000 do
     if LM3S.btnpressed( LM3S.BTN_SELECT ) then
