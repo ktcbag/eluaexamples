@@ -9,10 +9,10 @@
 --   Pedro Bittencourt
 --   Rafael Barmak
 --   Teo Benjamin
--- 
+--
 -- Initial Version by Ives Negreiros, August 2009
 --    Needs revisions and code cleaning
---	
+--
 ---------------------------------------------------------------------------------
 local Vmax = 22                        -- Number of pieces in vertical +1
 local Hmax = 12                        -- Number of pieces horizontally + 2
@@ -27,60 +27,60 @@ local total_lines = 0                  -- Total number of lines made by player
 local seed = 0                         -- Variable used to make math.random return a diferent value each time
 local game_map = {}                    -- Table for the game map
 for i = 1, Vmax, 1 do
-	game_map[ i ] = {}
+  game_map[ i ] = {}
 end
 
 -- Initial information
 require( pd.platform() )
-disp.init( 1000000 )
+lm3s.disp.init( 1000000 )
 
-disp.print( "Tetrives", 30, 30, 11 )
-disp.print( "Press SELECT", 30, 60, 11 )
+lm3s.disp.print( "Tetrives", 30, 30, 11 )
+lm3s.disp.print( "Press SELECT", 30, 60, 11 )
 while LM3S.btnpressed( LM3S.BTN_SELECT ) == false do
   seed = seed + 1
 end
 
 math.randomseed( seed )
-disp.clear()
+lm3s.disp.clear()
 
 function scan_piece( next_piece )      -- This function selec the next piece based on return of math.random function
   if( next_piece == 1 ) then
     next_piece_map = { { 1, 1 }, { 1, 1 } }
-    nextrotate_type = no_rotate
+    next_rotate_type = 0
 
   elseif( next_piece == 2 ) then
     next_piece_map = { { 1, 1, 0 }, { 0, 1, 1 }, { 0, 0, 0 } }
-    nextrotate_type = transpose_matrix_and_vertical_exchange
+    next_rotate_type = 1
 
   elseif( next_piece == 3 ) then
     next_piece_map = { { 0, 1, 1 }, { 1, 1, 0 }, { 0, 0, 0 } }
-    nextrotate_type = transpose_matrix_and_vertical_exchange
+    next_rotate_type = 1
 
   elseif( next_piece == 4 ) then
     next_piece_map = { { 0, 0, 1 }, { 1, 1, 1 }, { 0, 0, 0 } }
-    nextrotate_type = transpose_matrix_and_vertical_exchange_only
+    next_rotate_type = 2
 
   elseif( next_piece == 5 ) then
     next_piece_map = { { 1, 0, 0 }, { 1, 1, 1 }, { 0, 0, 0 } }
-    nextrotate_type = transpose_matrix_and_vertical_exchange_only
+    next_rotate_type = 2
 
   elseif( next_piece == 6 ) then
     next_piece_map = { { 0, 1, 0 }, { 1, 1, 1 }, { 0, 0, 0 } }
-    nextrotate_type = transpose_matrix_and_vertical_exchange_only
+    next_rotate_type = 2
 
   elseif( next_piece == 7 ) then
     next_piece_map = { {0, 0, 0, 0 }, { 1, 1, 1, 1 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } }
-    nextrotate_type = transpose_matrix_only
+    next_rotate_type = 4
   end
 end
 
-function draw_walls()                  -- This function draws the walls and the base of game piece screen
+function draw_walls()                  -- This function draws the walls and the base of game screen
   for i = 6, 63, 3 do
-    disp.print( "|", 3, i, 11 )
-    disp.print( "|", 118, i, 11 )
+    lm3s.disp.print( "|", 3, i, 11 )
   end
   for i = 3, 118, 4 do
-     disp.print( "-", i, 2, 11 )
+	lm3s.disp.print( "-", i, 2, 11 )
+	lm3s.disp.print( "-", i, 65, 11 )
   end
 end
 
@@ -91,15 +91,15 @@ function sound()                       -- This function beeps
 end
 
 function print_data()                  -- This function writes the score and level on screen
-  disp.print( "Score:"..tostring( score ), 0, 88, 8 )
-  disp.print( "Level:"..tostring( level ), 0, 80, 8 )
+  lm3s.disp.print( "Score:"..tostring( score ), 0, 88, 8 )
+  lm3s.disp.print( "Level:"..tostring( level ), 0, 80, 8 )
 end
 
 function draw_piece()                  -- This function draws the piece on the screen
   for i in ipairs( piece_map ) do
     for j in ipairs( piece_map[ i ] ) do
       if( piece_map[ i ][ j ] == 1 ) then
-        disp.print( "*", ( PieceV + i - 1 ) * 6, ( PieceH + j - 1 ) * 6, 11 )
+        lm3s.disp.print( "*", ( PieceV + i - 1 ) * 6, ( PieceH + j - 1 ) * 6, 11 )
       end
     end
   end
@@ -109,14 +109,14 @@ function erase_piece()                 -- This function erases the piece on the 
   for i in ipairs( piece_map ) do
     for j in ipairs( piece_map[ i ] ) do
       if( piece_map[ i ][ j ] == 1 ) then
-        disp.print( "*", ( PieceV + i - 1 ) * 6, ( PieceH + j - 1 ) * 6, 0 )
+        lm3s.disp.print( "*", ( PieceV + i - 1 ) * 6, ( PieceH + j - 1 ) * 6, 0 )
       end
     end
   end
 end
 
 function move_down()                   -- This function moves the piece down if there is no obstacle in the way, else create new piece
-  free = 0                             -- It also test the lines (see function test_line for further explanation)
+  free = 0                              -- It also test the lines (see function test_line for further explanation)
   for i in ipairs( piece_map ) do
     for j in ipairs( piece_map[ i ] ) do
       if( piece_map[ i ][ j ] == 1 ) then
@@ -133,10 +133,13 @@ function move_down()                   -- This function moves the piece down if 
   else
     for i in ipairs( piece_map ) do
       for j in ipairs( piece_map[ i ] ) do
-        if( piece_map[ i ][ j ] == 1 ) then          game_map[ PieceV + i ][ PieceH + j ] = 1
+        if( piece_map[ i ][ j ] == 1 ) then
+          game_map[ PieceV + i ][ PieceH + j ] = 1
         end
-      end    end
+      end
+    end
     test_line()
+	print ("create new piece")
     create_new_piece()
   end
 end
@@ -162,9 +165,13 @@ end
 function move_right()                  -- This function moves the piece right if there is no obstacle in the way
   free = 0
   for i in ipairs( piece_map ) do
-    for j in ipairs( piece_map[ i ] ) do      if( piece_map[ i ][ j ] == 1 ) then        if( game_map[ PieceV + i ][ PieceH + j + 1 ] == 0 ) then
+    for j in ipairs( piece_map[ i ] ) do
+      if( piece_map[ i ][ j ] == 1 ) then
+        if( game_map[ PieceV + i ][ PieceH + j + 1 ] == 0 ) then
           free = free + 1
-        end      end    end
+        end
+      end
+    end
   end
   if ( free == 4 ) then
     erase_piece()
@@ -180,26 +187,29 @@ function rotate()                      -- This function rotate the pieces
   end
   free = 0
   erase_piece()
-  if ( rotate_type == transpose_matrix_and_vertical_exchange or rotate_type == transpose_matrix_and_vertical_exchange_only ) then
-    for i in ipairs( piece_map ) do
+  if ( rotate_type == 1 or rotate_type == 2 ) then
+    for i in ipairs( piece_map ) do              -- this loop test if each part of piece can rotate
       for j in ipairs( piece_map[ i ] ) do
-        if( piece_map[ i ][ j ] == 1 ) then          if( game_map[ PieceV + j ][ 4 - i + PieceH ] == 0 ) then
+        if( piece_map[ i ][ j ] == 1 ) then
+          if( game_map[ PieceV + j ][ 4 - i + PieceH ] == 0 ) then
             free = free + 1
           end
         end
       end
     end
-    if( free == 4 ) then
-      if( rotate_type == transpose_matrix_and_vertical_exchange ) then
-        rotate_type = transpose_matrix_and_horizontal_exchange
-      end      for i in ipairs( piece_map ) do
+    if( free == 4 ) then               -- If all the parts of piece can rotate, then 'free' will be equals to four
+      if( rotate_type == 2 ) then
+        rotate_type = 1
+      end
+      for i in ipairs( piece_map ) do            -- This loop rotates the piece
         for j in ipairs( piece_map[ i ] ) do
-          piecerot[ i ][ j ] = piece_map[ j ][ 4 - i ]        end
+          piecerot[ i ][ j ] = piece_map[ j ][ 4 - i ]     -- This is the equation of the rotation function for this type of rotation
+        end
       end
       piece_map = piecerot
     end
 
-  elseif ( rotate_type == transpose_matrix_and_horizontal_exchange ) then
+  elseif ( rotate_type == 3 ) then     -- This part works like the upper part, but for another type of rotation
     for i in ipairs( piece_map ) do
       for j in ipairs( piece_map[ i ] ) do
         if( piece_map[ i ][ j ] == 1 ) then
@@ -210,7 +220,7 @@ function rotate()                      -- This function rotate the pieces
       end
     end
     if( free == 4 ) then
-      rotate_type =  transpose_matrix_and_vertical_exchange
+      rotate_type =  2
       for i in ipairs( piece_map ) do
         for j in ipairs( piece_map[ i ] ) do
           piecerot[ i ][ j ] = piece_map[ 4 - j ][ i ]
@@ -219,7 +229,7 @@ function rotate()                      -- This function rotate the pieces
       piece_map = piecerot
     end
 
-  elseif ( rotate_type == transpose_matrix_only ) then
+  elseif ( rotate_type == 4 ) then     -- This part works like the upper part, but for another type of rotation
     for i in ipairs( piece_map ) do
       for j in ipairs( piece_map[ i ] ) do
         if( piece_map[ i ][ j ] == 1 ) then
@@ -245,21 +255,25 @@ end
 function remove_line( line )
   for i = line, Vmax - 2, 1 do
     for j = 2, Hmax - 1, 1 do
-      disp.print( "*", ( i - 1 ) * 6, ( j - 1 ) * 6, 0 )
+      lm3s.disp.print( "*", ( i - 1 ) * 6, ( j - 1 ) * 6, 0 )
       game_map[ i ][ j ] = game_map[ i + 1 ][ j ]
       if( game_map[ i ][ j ] == 1 ) then
-        disp.print( "*", ( i - 1 ) * 6, ( j - 1 ) * 6, 11 )
+        lm3s.disp.print( "*", ( i - 1 ) * 6, ( j - 1 ) * 6, 11 )
       end
     end
   end
 end
 
 function test_line()                   -- This function tests the lines, if there is a full line, then this
-  lines = 0                            -- function removes this line and move down everything that is upper to it  i = 2
+  lines = 0                            -- function removes this line and move down everything that is upper to it
+  i = 2
   while ( i<Vmax ) do
-    j = 2    while ( j<Hmax ) do
-      if( game_map[i][j] == 0 ) then        break
+    j = 2
+    while ( j<Hmax ) do
+      if( game_map[i][j] == 0 ) then
+        break
       elseif( j == Hmax - 1 ) then
+	  print (i, j)
         remove_line( i )
         lines = lines + 1
         i = i - 1
@@ -278,24 +292,24 @@ function test_line()                   -- This function tests the lines, if ther
 end
 
 function create_new_piece()            -- This Function creates a new piece
-  next_piece = math.random( 7 )
   piece_map = next_piece_map
-  rotate_type = nextrotate_type
+  rotate_type = next_rotate_type
   PieceV = 18
   PieceH = 4
-  scan_piece ()
+  next_piece = math.random( 7 )
+  scan_piece ( next_piece )
   for i = 1, 2, 1 do
     for j = 1, 4, 1 do
-      disp.print( "*", 94 + ( j * 6 ), 78 + ( i * 6 ), 0 )
+      lm3s.disp.print( "*", 94 + ( j * 6 ), 78 + ( i * 6 ), 0 )
     end
   end
   for i in ipairs( next_piece_map ) do
-    if( i == 3 ) then 
+    if( i == 3 ) then
       break
     end
     for j in ipairs( next_piece_map[ i ] ) do
       if( next_piece_map[ i ][ j ] == 1 ) then
-        disp.print( "*", 94 + ( j * 6 ), 78 + ( ( 3 - i ) * 6 ), 11 )
+        lm3s.disp.print( "*", 94 + ( j * 6 ), 78 + ( ( 3 - i ) * 6 ), 11 )
       end
     end
   end
@@ -309,9 +323,9 @@ end
 ---------------------------------------------------------------------------------
 repeat
 
-  for i in ipairs( game_map ) do       -- This loop create the border of game's map
+  for i in ipairs( game_map ) do       -- This loop create the border of game's map in the table
     for j = 1, Hmax, 1 do
-      if( j == 1 or j == Hmax or i == 1 or i == 21 ) then
+      if( j == 1 or j == Hmax or i == 1 or i == Vmax ) then
         game_map[ i ][ j ] = 1
       else
         game_map[ i ][ j ] = 0
@@ -324,7 +338,7 @@ repeat
   pwm.setup( 1, 1000, 70 )
   draw_walls()
   next_piece = math.random(7)
-  scan_piece ()
+  scan_piece ( next_piece )
   create_new_piece()
   collectgarbage( "collect" )
   while true do                        -- This loop refreshes the data and responds the player's input
@@ -357,11 +371,11 @@ repeat
   if score > highscore then
     highscore = score
   end
-  disp.clear()                         -- This statements displays the game over screen
-  disp.print( "Game Over :(", 30, 20, 11 )
-  disp.print( "Your score was "..tostring( score ), 0, 40, 11 )
-  disp.print( "Highscore: "..tostring( highscore ), 15, 50, 11 )
-  disp.print( "SELECT to restart", 6, 70, 11 )
+  lm3s.disp.clear()                         -- This statements displays the game over screen
+  lm3s.disp.print( "Game Over :(", 30, 20, 11 )
+  lm3s.disp.print( "Your score was "..tostring( score ), 0, 40, 11 )
+  lm3s.disp.print( "Highscore: "..tostring( highscore ), 15, 50, 11 )
+  lm3s.disp.print( "SELECT to restart", 6, 70, 11 )
   enough = true                        -- If the player presses select before the time reach 1000000ms, then restart the game
   for i=1, 1000000 do
     if LM3S.btnpressed( LM3S.BTN_SELECT ) then
@@ -369,6 +383,6 @@ repeat
       break
     end
   end
-  disp.clear()  
+  lm3s.disp.clear()
 until ( enough )
-disp.off()
+lm3s.disp.off()
