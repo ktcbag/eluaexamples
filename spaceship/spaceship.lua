@@ -22,20 +22,10 @@ local sx = 0							-- Ship's X position
 local bullets = 50						-- Number of bullets left
 local score = 0							-- Player's score
 local numOfEnemies = 5					-- Number of simultaneous enemies
-
+local won = false						-- If the player won the game, this value is true. If not, it's false.
 -- Initialization
-require( pd.platform() )
-disp.init( 1000000 )
+local kit = require( pd.cpu() )
 
--- Initial information
-disp.print( "eLua SpaceShip", 10, 40, 11 )
-disp.print( "Press SELECT", 10, 70, 11 )
-local seed = 0
-while LM3S.btnpressed( LM3S.BTN_SELECT ) == false do
-	seed = seed + 1
-end
-math.randomseed( seed )
-disp.clear()
 
 local canvasMap = {}	-- canvasMap[ line ][ #shot ]
 -- canvasMap[ i ][ j ]: i represents the y position and j is a numeric index for each shot in that line. The value is the x position.
@@ -50,11 +40,11 @@ end
 
 function drawWall( x, y )
 	for i = 0, y, 7 do
-  	disp.print( "|", xcanvas + 1, i, 0 )
+  	lm3s.disp.print( "|", xcanvas + 1, i, 0 )
   end
   xcanvas = x
   for i = 0, y, 7 do
-  	disp.print( "|", xcanvas + 1, i, 6 )
+  	lm3s.disp.print( "|", xcanvas + 1, i, 6 )
   end
 
 end
@@ -62,30 +52,30 @@ end
 function drawShip( x, y, color, movement )
 
 	if ( movement == 0 ) then
-  		disp.print( ShipChar, x, y,  color )
+  		lm3s.disp.print( ShipChar, x, y,  color )
 	elseif ( movement > 0 ) then -- Moving Down
 		if y < 8 then
-			disp.print( ShipChar, x, 0,  0 )
+			lm3s.disp.print( ShipChar, x, 0,  0 )
 		else
-			disp.print( ShipChar, x, y - 8 , 0 )
+			lm3s.disp.print( ShipChar, x, y - 8 , 0 )
 		end
-  	disp.print( ShipChar, x, y,  color )
+  	lm3s.disp.print( ShipChar, x, y,  color )
   elseif ( movement < 0 ) then -- Moving Up
-		disp.print( ShipChar, x, y + 8, 0 )
-  	disp.print( ShipChar, x, y,  color )
+		lm3s.disp.print( ShipChar, x, y + 8, 0 )
+  	lm3s.disp.print( ShipChar, x, y,  color )
   end
 end
 
 
 function updateShipPos()
-  if LM3S.btnpressed( LM3S.BTN_UP ) then
+  if kit.btn_pressed( kit.BTN_UP ) then
     if ( sy > 1 ) then
       sy = sy - 1
       drawShip( sx, sy, 11, -1 )
     else
     	tmr.delay( 1, 1700 )
     end
-  elseif LM3S.btnpressed( LM3S.BTN_DOWN ) then
+  elseif kit.btn_pressed( kit.BTN_DOWN ) then
     if ( sy + 7 < ycanvas ) then
       sy = sy + 1
       drawShip( sx, sy, 11, 1 )
@@ -103,13 +93,12 @@ end
 function updateShots()
 	for i in ipairs( canvasMap ) do
 		for j in ipairs( canvasMap[ i ] ) do
-			print( j, canvasMap[i][j] )
 			if canvasMap[ i ][ j ] then
-				disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
+				lm3s.disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
 				canvasMap[ i ][ j ] = canvasMap[ i ][ j ] + 2
-				disp.print( shotChar, canvasMap[ i ][ j ], i, 13 )
+				lm3s.disp.print( shotChar, canvasMap[ i ][ j ], i, 13 )
 				if canvasMap[ i ][ j ] + 4 >= xcanvas then
-					disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
+					lm3s.disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
 					table.remove( canvasMap[ i ], j )
 					break
 				end
@@ -136,7 +125,7 @@ function shot()
 end
 
 function buttonClicked( button )
-	if LM3S.btnpressed( button ) then
+	if kit.btn_pressed( button ) then
 		pressed[ button ] = true
 	else
 		if pressed[ button ] then
@@ -149,11 +138,11 @@ function buttonClicked( button )
 end
 
 function printBulletsNum()
-	disp.print( string.format( "%2d", bullets ), xcanvas + 4, 2, 6 )
+	lm3s.disp.print( string.format( "%2d", bullets ), xcanvas + 4, 2, 6 )
 end
 
 function printScore()
-	disp.print( string.format( "%2d", score ), xcanvas + 4, ycanvas - 10, 6 )
+	lm3s.disp.print( string.format( "%2d", score ), xcanvas + 4, ycanvas - 10, 6 )
 end
 
 function sound()
@@ -166,11 +155,11 @@ end
 function updateEnemiesPos()
 	for i = 5, 85, 10 do
 		if canvasMap[ i ].e then
-			disp.print( enemyChar, canvasMap[ i ].e, i, 0 )
+			lm3s.disp.print( enemyChar, canvasMap[ i ].e, i, 0 )
 			canvasMap[ i ].e = canvasMap[ i ].e - 1
-			disp.print( enemyChar, canvasMap[ i ].e, i, 11 )
+			lm3s.disp.print( enemyChar, canvasMap[ i ].e, i, 11 )
 			if canvasMap[ i ].e <= 0 then
-				disp.print( enemyChar, canvasMap[ i ].e, i, 0 )
+				lm3s.disp.print( enemyChar, canvasMap[ i ].e, i, 0 )
 				canvasMap[ i ].e = nil
 				createEnemy()
 			end
@@ -195,28 +184,22 @@ function addEnemy()
 	end
 end
 function destroyEnemy( i, j, en )
-	print("Kill!" )
-	disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
+	lm3s.disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
 	table.remove( canvasMap[ i ], j )
-	disp.print( enemyChar, canvasMap[ en ].e, en, 0 )
+	lm3s.disp.print( enemyChar, canvasMap[ en ].e, en, 0 )
 	canvasMap[ en ].e = nil
 	score = score + 1
-	bullets = bullets + 10
-	if bullets > 99 then
-		bullets = 99
-		addEnemy()
-	end
 end
 
 function destroyAll()
 	for i in ipairs( canvasMap ) do
 		for j in ipairs( canvasMap[ i ] ) do
-			disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
+			lm3s.disp.print( shotChar, canvasMap[ i ][ j ], i, 0 )
 			table.remove( canvasMap[ i ], j )
 		end
 		local en = math.floor( i / 10 ) * 10 + 5
 		if canvasMap[ en ].e then
-			disp.print( enemyChar, canvasMap[ en ].e, en, 0 )
+			lm3s.disp.print( enemyChar, canvasMap[ en ].e, en, 0 )
 			canvasMap[ en ].e = nil
 		end
 	end
@@ -228,6 +211,18 @@ for i = 1, numOfEnemies, 1 do
 end
 
 
+lm3s.disp.init( 1000000 )
+
+-- Initial information
+lm3s.disp.print( "eLua SpaceShip", 10, 40, 11 )
+lm3s.disp.print( "Press SELECT", 10, 70, 11 )
+local seed = 0
+while not buttonClicked( kit.BTN_SELECT ) do
+	seed = seed + 1
+end
+math.randomseed( seed )
+lm3s.disp.clear()
+
 -------------------------------------------------------------------------------
 --
 --				MAIN LOOP
@@ -235,8 +230,6 @@ end
 -------------------------------------------------------------------------------
 pwm.setclock( 1, 25000000 )
 pwm.setup( 1, 1000, 70 )
-
-require( pd.platform() )
 
 drawWall( xcanvas, ycanvas )
 
@@ -248,16 +241,29 @@ while true do
 	end
 	printBulletsNum()
 	printScore()
-	if buttonClicked( LM3S.BTN_SELECT ) then shot() end
-	if buttonClicked( LM3S.BTN_RIGHT ) then
+	if buttonClicked( kit.BTN_SELECT ) then shot() end
+	if buttonClicked( kit.BTN_RIGHT ) then
 		destroyAll()
 		for i = 1, numOfEnemies, 1 do
 			createEnemy()
 		end
 	end
+	if score >= 50 then
+	  won = true
+	  break
+	end
+	if bullets <= 0 then
+	  won = false
+	  break
+	end
 	tmr.delay(1, 12000)
 	collectgarbage("collect")
 end
-  disp.clear()
-  disp.print( "Game Over :(", 30, 20, 11 )
-  disp.print( "SELECT to restart", 6, 70, 11 )
+if won then
+  lm3s.disp.clear()
+  lm3s.disp.print( "You won!", 50, 30, 11 )
+  lm3s.disp.print( "Congratulations!", 70, 20, 11 )
+else
+  lm3s.disp.clear()
+  lm3s.disp.print( "Game Over! :(", 60, 20, 11 )
+end
