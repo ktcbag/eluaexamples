@@ -11,7 +11,6 @@
 --   Teo Benjamin
 --
 -- Initial Version by Ives Negreiros, August 2009
---    Needs revisions and code cleaning
 --
 ---------------------------------------------------------------------------------
 local Vmax = 22                        -- Number of pieces in vertical +1
@@ -31,7 +30,7 @@ for i = 1, Vmax, 1 do
 end
 
 -- Initial information
-local platform = require( pd.cpu() )
+local platform = require( pd.board() )
 lm3s.disp.init( 1000000 )
 
 lm3s.disp.print( "Tetrives", 30, 30, 11 )

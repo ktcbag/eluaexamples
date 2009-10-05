@@ -1,12 +1,17 @@
 -------------------------------------------------------------------------------
--------------------------------------------------------------------------------
 --
 --		eLua SpaceShip Game
 --
---													LED Lab @ PUC-Rio
---																2009
+-- LED Lab @ PUC-Rio - 2009
+--   Dado Sutter
+--   Ives Negreiros
+--   Ricardo Rosa
+--   Pedro Bittencourt
+--   Teo Benjamin
 --
--------------------------------------------------------------------------------
+--
+-- Initial Version by Téo Benjamin, Aug 2009
+--
 -------------------------------------------------------------------------------
 
 local xcanvas = 124						-- Real screen X size
@@ -24,7 +29,7 @@ local score = 0							-- Player's score
 local numOfEnemies = 5					-- Number of simultaneous enemies
 local won = false						-- If the player won the game, this value is true. If not, it's false.
 -- Initialization
-local kit = require( pd.cpu() )
+local kit = require( pd.board() )
 
 
 local canvasMap = {}	-- canvasMap[ line ][ #shot ]

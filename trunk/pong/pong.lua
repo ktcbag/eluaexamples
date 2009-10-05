@@ -13,7 +13,7 @@
 -- Initial Version by Dado Sutter, Fev 2009
 --    This had only the ball bouncing on walls, paddle and paddle movement
 --
--- Greatly enhanced by Teo Benjamin, adding:
+-- Greatly enhanced by Teo Benjamin in Aug/Sep 2009, adding:
 --    Score, resizeable paddles, levels/speeds, items
 --
 --
@@ -62,7 +62,7 @@ local highscore                -- Current Highscore
 item.all_chars = {}
 local pressed = {}             -- pressed[ button ] is true if the corresponding button was pressed, or nil if not
 
-local kit = require( pd.cpu() )  -- This variable is used as a pin assignments for the specific board
+local kit = require( pd.board() )  -- This variable is used as a pin assignments for the specific board
 
 local itemFunction = {
 ["L"] = function ()
