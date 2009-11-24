@@ -1,4 +1,12 @@
-local xMax = math.floor( 128 / 6 ) - 1
+---------------------------------------------------------------
+-- Classic snake game
+-- Still testing!
+--
+--					By Ives Negreiros and Téo Benjamin
+---------------------------------------------------------------
+
+
+ocal xMax = math.floor( 128 / 6 ) - 1
 local yMax = math.floor( 96 / 8 ) - 1
 local game_map = {}
 
@@ -56,17 +64,19 @@ local function eat_food()
 end
 
 local function check_collision()
-	if Head.x <= 0 or Head.x >= xMax then
+  print"checando"
+  if Head.x <= 0 or Head.x >= xMax then
     return true
   elseif Head.y <= 0 or Head.y >= yMax then
     return true
   elseif ( ( game_map[ Head.x ][ Head.y ] ) and ( game_map[ Head.x ][ Head.y ] ~= "food" ) ) then
   	return true
   end
-	  return false
+  return false
 end
 
 local function move()
+
 	if game_map[ Tail.x ][ Tail.y ] == "right" then
 		Tail.dx = 1
 		Tail.dy = 0
@@ -80,7 +90,7 @@ local function move()
 		Tail.dx = 0
 		Tail.dy = 1
 	end
-
+print("movendo", Head.x, Head.y )
 	game_map[ Head.x ][ Head.y ] = direction
 	Head.x = Head.x + Head.dx
 	Head.y = Head.y + Head.dy
@@ -128,10 +138,10 @@ end
 function init()
   food = false
   lm3s.disp.clear()
-	draw_walls()
+  draw_walls()
   size = 3
-	score = 0
-	level = 1
+  score = 0
+  level = 1
   Tail.x = 1
   Tail.y = 1
   Head.x = Tail.x + ( size - 1 )
@@ -140,7 +150,7 @@ function init()
   Head.dy = 0
   Tail.dx = Head.dx
   Tail.dy = Head.dy
-	direction = "right"
+  direction = "right"
 
 	for i = 0, xMax, 1 do
 		game_map[ i ] = {}
@@ -158,25 +168,26 @@ end
 repeat
 	init()
   while true do
-
+		local dir = direction
 		for i = 1, 1000 - ( 100 * level ), 1 do
+
 			if kit.btn_pressed( kit.BTN_RIGHT ) and direction ~= "left" then
-				direction = "right"
+				dir = "right"
 				Head.dx = 1
 				Head.dy = 0
 			end
 			if kit.btn_pressed( kit.BTN_LEFT ) and direction ~= "right" then
-				direction = "left"
+				dir = "left"
 				Head.dx = -1
 				Head.dy = 0
 			end
 			if kit.btn_pressed( kit.BTN_UP ) and direction ~= "down" then
-				direction = "up"
+				dir = "up"
 				Head.dx = 0
 				Head.dy = -1
 			end
 			if kit.btn_pressed( kit.BTN_DOWN ) and direction ~= "up" then
-				direction = "down"
+				dir = "down"
 				Head.dx = 0
 				Head.dy = 1
 			end
@@ -184,8 +195,9 @@ repeat
 				level = level + 1
 			end
 		end
+		direction = dir
 		move()
-		if check_collision() then break end
+		if check_collision() then print"colidiu" break end
 	  --tmr.delay( 0, 400000 )
   	--[[
 	  game_map[ Head.x ][ Head.y ] = nil
@@ -201,6 +213,7 @@ repeat
     highscore = score
   end
     lm3s.disp.clear()                         -- This statements displays the game over screen
+	print(Head.x, Head.y, ( game_map[ Head.x ][ Head.y ] ), direction)
     lm3s.disp.print( "Game Over :(", 30, 20, 11 )
     lm3s.disp.print( "Your score was "..tostring( score ), 0, 40, 11 )
     lm3s.disp.print( "Highscore: "..tostring( highscore ), 15, 50, 11 )
