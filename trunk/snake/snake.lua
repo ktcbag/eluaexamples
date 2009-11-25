@@ -6,7 +6,7 @@
 ---------------------------------------------------------------
 
 
-ocal xMax = math.floor( 128 / 6 ) - 1
+local xMax = math.floor( 128 / 6 ) - 1
 local yMax = math.floor( 96 / 8 ) - 1
 local game_map = {}
 
@@ -43,20 +43,17 @@ local pressed = {}
 
 local function create_food()
 --	if not food then
-	    print"comida!!!"
 			Food.x, Food.y = math.random( xMax - 1), math.random( yMax - 1)
 			while game_map[ Food.x ][ Food.y ] do
 			  Food.x, Food.y = math.random( xMax - 1 ), math.random( yMax - 1 )
 			end
 			game_map[ Food.x ][ Food.y ] = "food"
-			print(Food.x, Food.y)
 			lm3s.disp.print( "@", Food.x * 6, Food.y * 8, 10 )
 --	end
 end
 
 
 local function eat_food()
-  print"comi"
 	lm3s.disp.print( "@", Head.x * 6, Head.y * 8, 0 )
 	game_map[ Head.x ][ Head.y ] = nil
 	create_food()
@@ -64,7 +61,6 @@ local function eat_food()
 end
 
 local function check_collision()
-  print"checando"
   if Head.x <= 0 or Head.x >= xMax then
     return true
   elseif Head.y <= 0 or Head.y >= yMax then
@@ -90,7 +86,6 @@ local function move()
 		Tail.dx = 0
 		Tail.dy = 1
 	end
-print("movendo", Head.x, Head.y )
 	game_map[ Head.x ][ Head.y ] = direction
 	Head.x = Head.x + Head.dx
 	Head.y = Head.y + Head.dy
@@ -111,7 +106,6 @@ end
 
 
 local function draw_walls()
-print"desenhando"
 	for i = 0, xMax*2, 1 do
     lm3s.disp.print( "_", i * 3, yMax * 8 - 6, 11 )
 		lm3s.disp.print( "_", i * 3, 0, 11 )
@@ -213,7 +207,6 @@ repeat
     highscore = score
   end
     lm3s.disp.clear()                         -- This statements displays the game over screen
-	print(Head.x, Head.y, ( game_map[ Head.x ][ Head.y ] ), direction)
     lm3s.disp.print( "Game Over :(", 30, 20, 11 )
     lm3s.disp.print( "Your score was "..tostring( score ), 0, 40, 11 )
     lm3s.disp.print( "Highscore: "..tostring( highscore ), 15, 50, 11 )
