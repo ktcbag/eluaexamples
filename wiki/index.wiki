@@ -1,5 +1,5 @@
 These are Lua code examples, to be run in eLua ports to several MCU-based platforms.
 Pls refer to www.eluaproject.net for more info and post questions on it's list for help.
 
-Thanks !
+Thanks !<br>
 Dado Sutter
