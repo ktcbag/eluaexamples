@@ -33,8 +33,8 @@ end
 local platform = require( pd.board() )
 lm3s.disp.init( 1000000 )
 
-lm3s.disp.print( "Tetrives", 30, 30, 11 )
-lm3s.disp.print( "Press SELECT", 30, 60, 11 )
+lm3s.disp.print( "eLua Tetrives", 30, 10, 11 )
+lm3s.disp.print( "Press SELECT -->", 30, 40, 11 )
 while platform.btn_pressed( platform.BTN_SELECT ) == false do
   seed = seed + 1
 end
@@ -138,7 +138,6 @@ function move_down()                   -- This function moves the piece down if 
       end
     end
     test_line()
-	print ("create new piece")
     create_new_piece()
   end
 end
@@ -272,7 +271,6 @@ function test_line()                   -- This function tests the lines, if ther
       if( game_map[i][j] == 0 ) then
         break
       elseif( j == Hmax - 1 ) then
-	  print (i, j)
         remove_line( i )
         lines = lines + 1
         i = i - 1
