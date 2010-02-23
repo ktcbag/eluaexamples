@@ -1,0 +1,3 @@
+Morse code in eLua.
+
+Type your message and the program will morse it on any platform that has a buzzer or you can connect one to.
