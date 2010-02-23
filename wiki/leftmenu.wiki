@@ -1,6 +1,6 @@
 #summary Global sidebar page.
 
-= eLua Examples =
+=== eLua Examples ===
 
  * Basic Examples
   * [led]
