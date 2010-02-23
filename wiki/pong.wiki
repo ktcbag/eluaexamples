@@ -1,13 +1,1 @@
-#summary Pong examples main entry page.
-
-= Introduction =
-
 This is an eLua recreation of the classical Pong game, to run on Luminary Micro Cortex-M3 kits that have a RIT OLED display on-board.
-
-
-= Details =
-
-
-
-
-= Credits =
