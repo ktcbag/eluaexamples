@@ -1,8 +1,12 @@
+An eLua module, written entirely in Lua, to control IV-18 VFD tubes.
+
+www.eluaproject.net
+
+Some poor videos (better ones comming soon) at:
+http://www.giga.puc-rio.br/videosvfd/
+
+To receive e-mail notifications about the svn repo activity, pls subscribe to http://groups.google.com/group/eluaexamples-svn
 Vacuum Fluorescent Display controlling in eLua.
-
-Some art functions to illustrate IV-18 tubes can do more than to show clocks.
-
-Some number and string functions to extract the most from your tube.
 
 Doc is [http://code.google.com/p/eluaexamples/source/browse/trunk/vfd/README here]
 
