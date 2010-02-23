@@ -2,9 +2,9 @@
 
 === eLua Examples ===
 
- * Basic Examples
-  * [led]
-  * [pwmled]
+  * Basic Examples
+    * [led]
+    * [pwmled]
 
  * Games
    * [pong]
@@ -14,9 +14,9 @@
    * [hangman]
    * [life]
 
- * Controlling external devices
-  * [vfd]
+  * Controlling external devices
+    * [vfd]
 
- * Geek
-  * [morse]
-  * [tvbgone]
+  * Geek
+    * [morse]
+    * [tvbgone]
