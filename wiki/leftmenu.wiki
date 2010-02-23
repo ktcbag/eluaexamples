@@ -13,7 +13,7 @@
     * [hangman]
     * [life]
   * Controlling external devices
-    * [vfd]
+    * [eluavfd]
   * Music
     * [eluamidi]
   * Geek
