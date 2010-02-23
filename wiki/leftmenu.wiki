@@ -2,13 +2,21 @@
 
 = eLua Examples =
 
- * [pong]
- * tetrives
- * spaceship
- * race
- * vfd
- * morse
- * led
- * pwmled
- * hangman
- * life
+ * Basic Examples
+  * [led]
+  * [pwmled]
+
+ * Games
+  * [pong]
+  * [tetrives]
+  * [spaceship]
+  * [race]
+  * [hangman]
+  * [life]
+
+ * Controlling external devices
+  * [vfd]
+
+ * Geek
+  * [morse]
+  * [tvbgone]
