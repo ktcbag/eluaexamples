@@ -7,3 +7,6 @@ Some number and string functions to extract the most from your tube.
 Doc is [http://code.google.com/p/eluaexamples/source/browse/trunk/vfd/README here]
 
 Code is [http://code.google.com/p/eluaexamples/source/browse/trunk#trunk/vfd%3Fstate%3Dclosed here]
+  * The main module with the control primitives is [http://code.google.com/p/eluaexamples/source/browse/trunk/vfd/vfd.lua vfd.lua]
+  * A script that defines some art functions (pls see Doc above) is [http://code.google.com/p/eluavfd/source/browse/trunk/artvfd.lua artvfd.lua]
+  * A script that defines some number and string showing functions is [http://code.google.com/p/eluavfd/source/browse/trunk/numvfd.lua numvfd.lua]
