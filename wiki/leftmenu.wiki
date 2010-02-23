@@ -12,10 +12,8 @@
     * [race]
     * [hangman]
     * [life]
-
   * Controlling external devices
     * [vfd]
-
   * Geek
     * [morse]
     * [tvbgone]
