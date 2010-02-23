@@ -7,12 +7,12 @@
   * [pwmled]
 
  * Games
-  * [pong]
-  * [tetrives]
-  * [spaceship]
-  * [race]
-  * [hangman]
-  * [life]
+   * [pong]
+   * [tetrives]
+   * [spaceship]
+   * [race]
+   * [hangman]
+   * [life]
 
  * Controlling external devices
   * [vfd]
