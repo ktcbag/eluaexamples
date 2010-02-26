@@ -1,0 +1,49 @@
+considering hd44780.c your module name
+
+1: if hd44780.c the module is plataform independent, create at src/modules/*
+
+#####################################
+IMPORTANT
+define:
+	#define MIN_OPT_LEVEL 2
+before:
+	#include "lrodefs.h"
+#####################################
+
+2: in your module you'll have something like this...
+
+#####################################
+
+static int hd44780_write( lua_State *L );
+const LUA_REG_TYPE hd44780_map[] =
+{
+  { LSTRKEY( "init" ), LFUNCVAL( hd44780_init ) },
+  { LNILKEY, LNILVAL }
+}
+
+LUALIB_API int luaopen_hd44780( lua_State *L )
+{
+#if LUA_OPTIMIZE_MEMORY > 0
+  return 0; 
+#else
+  LREGISTER( L, AUXLIB_HD44780, hd44780_map ); 
+  return 1; 
+#endif
+}
+
+#####################################
+
+3: put:
+#define AUXLIB_HD44780 "hd44780"
+LUALIB_API int ( luaopen_hd44780 )( lua_State *L );
+at src/modules/auxmods.h
+
+4: put:
+_ROM( AUXLIB_HD44780, luaopen_hd44780, hd44780_map )
+at src/platform/lpc17xx/platform_conf.h
+
+5: put:
+hd44780.c
+at module_names variable
+in SConstruct
+( like: module_names = " ... hd44780.c" )

@@ -16,6 +16,7 @@ local pio = pio
 local bit = bit
 local tmr = tmr
 local pd = pd
+local mbed = mbed
 local mathmodf = math.modf
 local mathfmod = math.fmod
 local mathlog10 = math.log10
@@ -45,8 +46,17 @@ function init( t )
     clk_pin   = t.clk_pin or pio.P6_0
     din_pin   = t.din_pin or pio.P6_1
     load_pin  = t.load_pin or pio.P6_2
+  elseif pd.board() == "MBED" then
+  	clk_pin   = t.clk_pin or mbed.pio.P5
+	din_pin   = t.din_pin or mbed.pio.P6
+    load_pin  = t.load_pin or mbed.pio.P7
+
 --[[
   elseif pd.board() == "EK-LM3S6965" then
+    clk_pin   = t.clk_pin or 
+    din_pin   = t.din_pin or 
+    load_pin  = t.load_pin or 
+  elseif pd.board() == "ELUA-PUC" then
     clk_pin   = t.clk_pin or 
     din_pin   = t.din_pin or 
     load_pin  = t.load_pin or 
@@ -63,8 +73,7 @@ function init( t )
 -- VFD chars table
 -- Each value is the segment byte to write the key on vfd
 -- Table is indexed by the chars
-  local vfdc = { 
-           [ "0" ] = 0xFC, 
+  vfdc = { [ "0" ] = 0xFC, 
            [ "1" ] = 0x60, 
            [ "2" ] = 0xDA, 
            [ "3" ] = 0xF2, 
@@ -89,7 +98,7 @@ function init( t )
            [ "C" ] = 0x9C,
            [ "I" ] = 0x60,
            [ "F" ] = 0x8E
---         [ "." ] = 0x01,   -- now lit on the same digit of a char
+--           [ "." ] = 0x01,   -- lit on the same digit of a char
          }
 
 -- Another VFD char table, now indexed by string.byte( char ), to avoid
@@ -101,8 +110,8 @@ function init( t )
   for k, v in pairs( vfdc ) do
     vfdb[ strbyte( k ) ] = v
   end
-  vfdc = nil
-  collectgarbage()
+-- vfdc = nil
+-- collectgarbage()
   clear()
 end
 
@@ -118,26 +127,26 @@ function set( segs, digits )
   local data = bit.lshift( segs, 9 ) + digits
   for i = WORD_SIZE - 1, 0, -1 do
     pio.pin.setval( bit.isset( data, i ) and 1 or 0, din_pin )
-    pio.pin.sethigh( clk_pin )
-    pio.pin.setlow( clk_pin )
+    pio.pin.setval( 1, clk_pin )
+    pio.pin.setval( 0, clk_pin )
   end
-  pio.pin.sethigh( load_pin )
-  pio.pin.setlow( load_pin )
+  pio.pin.setval( 1, load_pin )
+  pio.pin.setval( 0, load_pin )
 end
 
 
 
 -- Turn off all segments of all digits
 function clear()
--- set( 0x00, 0x00 ) was the first implementation
+--  set( 0x00, 0x00 )  This was the old implementation
 -- Now we send only the 9 digit zeros for faster execution
-  pio.pin.setlow( din_pin )
+  pio.pin.setval( 0, din_pin )
   for i = 1, 9 do
-    pio.pin.sethigh( clk_pin )
-    pio.pin.setlow( clk_pin )
+    pio.pin.setval( 1, clk_pin )
+    pio.pin.setval( 0, clk_pin )
   end
-  pio.pin.sethigh( load_pin )
-  pio.pin.setlow( load_pin )
+  pio.pin.setval( 1, load_pin )
+  pio.pin.setval( 0, load_pin )
 end
 
 
@@ -149,8 +158,6 @@ end
 
 
 
---[[
-
 -------------------------------------------------------------------------------
 -- Now a primitive to write numbers, symbols and possible letters.
 -- We left some examples here but only one setstring() should be needed.
@@ -160,6 +167,8 @@ end
 -- the multiplexing control on them to ilustrate and keep things simple. A loop
 -- at the end of each function multiplexes the segs/digits control and a second
 -- argument "time" in each function controls the limits of this loop.
+
+
 
 
 -- This was the initial implementation to write numbers
@@ -240,7 +249,7 @@ function setstring3( str, time )
 
 end
 
---]]
+
 
 
 --------------------------------------------------------------------------------
@@ -251,6 +260,7 @@ end
 function setstring( str, time )
   local d = {}                            -- Segments set/lit for each vfd digit
   local dotpending = false
+
 
   for i = 1, #str do
     local cb = strbyte( str, -i, -i )     -- character str.byte buffer
