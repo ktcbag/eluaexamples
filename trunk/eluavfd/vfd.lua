@@ -48,8 +48,8 @@ function init( t )
     din_pin   = t.din_pin or pio.P6_1
     load_pin  = t.load_pin or pio.P6_2
   elseif pd.board() == "MBED" then
-  	clk_pin   = t.clk_pin or mbed.pio.P5
-	din_pin   = t.din_pin or mbed.pio.P6
+    clk_pin   = t.clk_pin or mbed.pio.P5
+    din_pin   = t.din_pin or mbed.pio.P6
     load_pin  = t.load_pin or mbed.pio.P7
 
 --[[
