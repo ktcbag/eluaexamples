@@ -2,7 +2,7 @@ An eLua module, written entirely in Lua, to control IV-18 VFD tubes.
 
 www.eluaproject.net
 
-Some poor videos (better ones comming soon) at:
+Some poor videos (better ones coming soon) at:
 http://www.giga.puc-rio.br/videosvfd/
 
 To receive e-mail notifications about the svn repo activity, pls subscribe to http://groups.google.com/group/eluaexamples-svn
@@ -14,3 +14,12 @@ Code is [http://code.google.com/p/eluaexamples/source/browse/trunk#trunk/vfd%3Fs
   * The main module with the control primitives is [http://code.google.com/p/eluaexamples/source/browse/trunk/vfd/vfd.lua vfd.lua]
   * A script that defines some art functions (pls see Doc above) is [http://code.google.com/p/eluavfd/source/browse/trunk/artvfd.lua artvfd.lua]
   * A script that defines some number and string showing functions is [http://code.google.com/p/eluavfd/source/browse/trunk/numvfd.lua numvfd.lua]
+
+VFD module and application have been tested on the following eLua supported boards:
+
+ * EK-LM3S8962
+ * mbed
+ * STR-E912
+ * PUC-Rio
+
+It should run with no modifications on any other eLua supported kit. You just have to define the PIO pins used for the interfacing. Pls check the above mentioned doc for further info.
