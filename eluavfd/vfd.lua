@@ -24,6 +24,7 @@ local strbyte = string.byte
 local strsub = string.sub
 local pairs = pairs
 local ipairs = ipairs
+local collectgarbage = collectgarbage
 
 module (...)
 
@@ -110,8 +111,8 @@ function init( t )
   for k, v in pairs( vfdc ) do
     vfdb[ strbyte( k ) ] = v
   end
--- vfdc = nil
--- collectgarbage()
+ vfdc = nil
+ collectgarbage()
   clear()
 end
 
