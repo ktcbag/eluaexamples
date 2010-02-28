@@ -1,3 +1,0 @@
-eLuaMIDI is a library, a Lua module, that offers a MIDI protocol API for eLua (www.eluaproject.net) aplications.
-
-It runs on all eLua supported platforms (see http://www.eluaproject.net/en_status.html#platforms) that are not too short on RAM and it will soon run on Desktop aplications too.
