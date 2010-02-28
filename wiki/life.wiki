@@ -1,1 +1,0 @@
-The simulation game of Life, running on a terminal connected to your kit.
