@@ -1,1 +1,0 @@
-An eLua incarnation of the classical Space Invaders game.
