@@ -1,3 +1,0 @@
-Play hangman on a terminal connected to your kit.
-
-Good examples of console position-addressing and other UI techniques.
