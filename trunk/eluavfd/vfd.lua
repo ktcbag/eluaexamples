@@ -12,19 +12,10 @@
 --
 --------------------------------------------------------------------------------
 
-local pio = pio
-local bit = bit
-local tmr = tmr
-local pd = pd
-local mbed = mbed
-local mathmodf = math.modf
-local mathfmod = math.fmod
-local mathlog10 = math.log10
-local strbyte = string.byte
-local strsub = string.sub
-local pairs = pairs
-local ipairs = ipairs
-local collectgarbage = collectgarbage
+local pio, bit, tmr, pd, mbed = pio, bit, tmr, pd, mbed
+local pairs, ipairs, collectgarbage = pairs, ipairs, collectgarbage
+local strbyte, strsub = string.byte, string.sub
+local mathmodf, mathfmod, mathlog10 = math.modf, math.fmod, math.log10
 
 module (...)
 
