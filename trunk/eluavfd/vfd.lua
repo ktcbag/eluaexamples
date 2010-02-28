@@ -12,9 +12,9 @@
 --
 --------------------------------------------------------------------------------
 
-local pio, bit, tmr, pd, mbed = pio, bit, tmr, pd, mbed
+local pio, bit, tmr, pd, mbed       = pio, bit, tmr, pd, mbed
 local pairs, ipairs, collectgarbage = pairs, ipairs, collectgarbage
-local strbyte, strsub = string.byte, string.sub
+local strbyte, strsub               = string.byte, string.sub
 local mathmodf, mathfmod, mathlog10 = math.modf, math.fmod, math.log10
 
 module (...)
