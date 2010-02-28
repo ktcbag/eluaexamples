@@ -1,5 +1,0 @@
-Car racing in eLua for the Luminary Micro Cortex-M3 boards that have the RIT OLED display
-
-EK-LM3S8962
-
-EK-LM3S6965
