@@ -1,1 +1,0 @@
-A variant of the led example, this time varying the intensity of the LED by using a PWM output.
