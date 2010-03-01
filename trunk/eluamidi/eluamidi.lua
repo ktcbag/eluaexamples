@@ -2,7 +2,7 @@
 --
 -- eLuaMIDI, a midi protocol API for eLua (www.eluaproject.net)
 --
--- v0.2, Feb 2010, by Thiago Naves, LED Lab, PUC-Rio
+-- v0.3, Feb 2010, by Thiago Naves, LED Lab, PUC-Rio
 --
 --------------------------------------------------------------------------------
 local uart = uart
@@ -196,18 +196,6 @@ end
 local function message_data_len( status )
   local index = 0
   local i = 128
-
-  --[[
-  -- Clear the lower nibble
-  repeat
-    if status >= i then
-      index = index + i
-      status = status -i
-    end
-
-    i = i / 2
-  until i < 16
-  ]]
 
   index = split_status( status ) 
 
@@ -453,21 +441,21 @@ function send_reset() -- OK
   uart.write( uart_port, defs[ "reset" ] )
 end
 
--- TESTED UP TO HERE  --
-
 -- Reads data from uart and interprets it
 -- Possible return values:
---  defs[ "msg_new_message" ] -> A new message was received and finished
---  defs[ "msg_in_message" ]  -> A new message was received, but is not complete
---  defs[ "msg_no_message" ]  -> Nothing or invalid data was received
---  The data read is stored in the message table:
---    message[ defs[ "msg_code" ] ]    -> MIDI code ( from defs table ) of the message
---    message[ defs[ "msg_channel" ] ] -> MIDI channel of the message
---    message[ defs[ "msg_data" ] ]    -> Data 1 parameter of the message
---    message[ defs[ "msg_data2" ] ]   -> Data 2 parameter of the message
---    Note: Not all messages have Data 1 or Data 2
---    Note 2: If a 14bit value is expectes, message[ defs[ "msg_data" ] ] will hold the 14bit value
---    Note 3: On system exclusive messages, message[ defs[ "msg_channel" ] ] is the ID
+--   defs[ "msg_new_message" ] -> A new message was received and finished
+--   defs[ "msg_in_message" ]  -> A new message was received, but is not complete
+--   defs[ "msg_no_message" ]  -> Nothing or invalid data was received
+--
+-- The data read is stored in the message table:
+--   message[ defs[ "msg_code" ] ]    -> MIDI code ( from defs table ) of the message
+--   message[ defs[ "msg_channel" ] ] -> MIDI channel of the message
+--   message[ defs[ "msg_data" ] ]    -> Data 1 parameter of the message
+--   message[ defs[ "msg_data2" ] ]   -> Data 2 parameter of the message
+--
+-- Note: Not all messages have Data 1 or Data 2
+-- Note 2: If a 14bit value is expectes, message[ defs[ "msg_data" ] ] will hold the 14bit value
+-- Note 3: On system exclusive messages, message[ defs[ "msg_channel" ] ] is the ID
 function receive( timeout, timer_id ) -- Still in test
   local buffer = ""   -- Buffer
   local c             -- Current character ( code )
@@ -485,38 +473,45 @@ function receive( timeout, timer_id ) -- Still in test
       end
     end
 
-      if c > 127 then -- Begin of a message ( If it's not a Status byte, ignore it )
-        rcv.in_message = true
-        rcv.data_read = 0
-        message = {}
-
-        if c == defs[ "system_exclusive_begin" ] then -- System exclusive
-          rcv.data_size = 0
-          rcv.sysEx = true
-          message[ defs[ "msg_data" ] ] = ""
-          message[ defs[ "msg_code" ] ] = defs[ "system_exclusive_begin" ] -- System Exclusive messages don't have channel
-        else  -- Not a system exclusive
-          rcv.sysEx = false
-          rcv.data_size = message_data_bytes( c ) 
-          message[ defs[ "msg_code" ] ], message[ defs[ "msg_channel" ] ] = split_status( c ) -- Set message code and channel
+    if c > 127 then -- Begin of a message ( It's a Status byte )
+      if c == defs[ "system_exclusive_end" ] then -- Check if it's the end of a system exclusive message before
+        if rcv.in_message then                    -- erasing the buffer
+          rcv.in_message = false
+          rcv.data_read = 0
+          return defs[ "msg_new_message" ]
+        else
+          rcv.in_message = false
+          rcv.data_read = 0
+          return defs[ "msg_no_message" ]
         end
       end
+
+      rcv.in_message = true
+      rcv.data_read = 0
+      message = {}
+
+      if c == defs[ "system_exclusive_begin" ] then -- System exclusive
+        rcv.data_size = 0
+        rcv.sysEx = true
+        message[ defs[ "msg_data" ] ] = ""
+        message[ defs[ "msg_code" ] ] = defs[ "system_exclusive_begin" ] -- System Exclusive messages don't have channel
+      else  -- Not a system exclusive
+        rcv.sysEx = false
+        rcv.data_size = message_data_bytes( c ) 
+        message[ defs[ "msg_code" ] ], message[ defs[ "msg_channel" ] ] = split_status( c ) -- Set message code and channel
+      end
+    end
 
     if rcv.in_message and c < 128 then -- We are receiving a message, store the data !
       -- If it's a system exclusive message ...
       if rcv.sysEx then
-        if c == defs[ "system_exclusive_end" ] then  -- Ok, end of the message
-          rcv.in_message = false
-          return defs[ "msg_new_message" ]
-        else -- Not the end 
-          -- Set the message[ defs[ "msg_channel" ] ] as the ID ( first byte )
-          if rcv.data_read == 0 then
-            message[ defs[ "msg_channel" ] ] = c
-            rcv.data_read = 1
-          else
-            -- Concact the data
-            message[ defs[ "msg_data" ] ] = message[ defs[ "msg_data" ] ] .. string.char( c )
-          end
+        -- Set the message[ defs[ "msg_channel" ] ] as the ID ( first byte )
+        if rcv.data_read == 0 then
+          message[ defs[ "msg_channel" ] ] = c
+          rcv.data_read = 1
+        else
+          -- Concact the data
+          message[ defs[ "msg_data" ] ] = message[ defs[ "msg_data" ] ] .. string.char( c )
         end
       else -- Not system exclusive
         if rcv.data_read == 0 then -- Received first byte
@@ -543,4 +538,6 @@ function receive( timeout, timer_id ) -- Still in test
     end -- rcv.in_message if
   end -- while
 end
+
+-- TESTED UP TO HERE  --
 
