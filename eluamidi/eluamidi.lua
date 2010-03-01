@@ -5,6 +5,39 @@
 -- v0.3, Feb 2010, by Thiago Naves, LED Lab, PUC-Rio
 --
 --------------------------------------------------------------------------------
+--
+-- Available functions:
+--   init( port )
+--   message_data_size( status )
+--   receive( timeout, timer_id )
+--   send_control_change( channel, control, value )
+--   send_14bit_control_change( channel, control_coarse, control_fine, value )
+--   send_note_on( channel, note, velocity )
+--   send_note_off( channel, note, velocity )
+--   send_after_touch( channel, note, pressure )
+--   send_program_change( channel, program )
+--   send_channel_pressure( channel, pressure )
+--   send_pitch_wheel( channel, pitch )
+--   send_system_exclusive( id, data )
+--   send_gm_system_enable( channel )
+--   send_gm_system_disable( channel )
+--   send_master_volume( channel, volume )
+--   send_quarter_frame( time_code )
+--   send_song_position( beat )
+--   send_song_select( song )
+--   send_tune_request()
+--   send_clock()
+--   send_start()
+--   send_continue()
+--   send_stop()
+--   send_active_sense()
+--   send_reset()
+--   send_all_notes_off( channel )
+--   send_all_sound_off( channel )
+--   send_all_controllers_off( channel )
+--   send_mono_operation( channel )
+--   send_poly_operation( channel )
+
 local uart = uart
 local assert = assert
 local string = string
@@ -71,6 +104,13 @@ defs[ "msg_new_message" ] = 1
 defs[ "msg_in_message" ] = 2
 defs[ "msg_no_message" ] = 3
 defs[ "msg_size_unknown" ] = -1
+
+-- Midi default controllers ( for especial messages )
+defs[ "cc_all_notes_off" ] = 123
+defs[ "cc_all_sound_off" ] = 120
+defs[ "cc_all_controllers_off" ] = 121
+defs[ "cc_mono_operation" ] = 126
+defs[ "cc_poly_operation" ] = 127
 
 -- Holds the uart ID to which send the MIDI messages
 local uart_port = 0
@@ -537,6 +577,31 @@ function receive( timeout, timer_id ) -- Still in test
       end -- rcv.sysEx if
     end -- rcv.in_message if
   end -- while
+end
+
+-- Sends an all notes off message ( same as sending a note off message for each note on )
+function send_all_notes_off( channel )
+  send_control_change( channel, defs[ "cc_all_notes_off" ], 0 )
+end
+
+-- Sends an all sound off message ( stops all sounds instantly )
+function send_all_sound_off( channel )
+  send_control_change( channel, defs[ "cc_all_sound_off" ], 0 )
+end
+
+-- Sends an all controllers off message ( resets all controllers to the default values )
+function send_all_controllers_off( channel )
+  send_control_change( channel, defs[ "cc_all_controllers_off" ], 0 )
+end
+
+-- Sends an monophonic operation message ( changes to monophonic mode )
+function send_mono_operation( channel )
+  send_control_change( channel, defs[ "cc_mono_operation" ], 0 )
+end
+
+-- Sends an polyphonic operation message ( changes to polyphonic mode )
+function send_poly_operation( channel )
+  send_control_change( channel, defs[ "cc_poly_operation" ], 0 )
 end
 
 -- TESTED UP TO HERE  --
