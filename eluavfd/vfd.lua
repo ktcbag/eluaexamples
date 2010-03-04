@@ -42,7 +42,6 @@ function init( t )
     clk_pin   = t.clk_pin or mbed.pio.P5
     din_pin   = t.din_pin or mbed.pio.P6
     load_pin  = t.load_pin or mbed.pio.P7
-
 --[[
   elseif pd.board() == "EK-LM3S6965" then
     clk_pin   = t.clk_pin or 
@@ -102,8 +101,8 @@ function init( t )
   for k, v in pairs( vfdc ) do
     vfdb[ strbyte( k ) ] = v
   end
- vfdc = nil
- collectgarbage()
+  vfdc = nil
+  collectgarbage()
   clear()
 end
 
@@ -119,11 +118,11 @@ function set( segs, digits )
   local data = bit.lshift( segs, 9 ) + digits
   for i = WORD_SIZE - 1, 0, -1 do
     pio.pin.setval( bit.isset( data, i ) and 1 or 0, din_pin )
-    pio.pin.setval( 1, clk_pin )
-    pio.pin.setval( 0, clk_pin )
+    pio.pin.sethigh( clk_pin )
+    pio.pin.setlow( clk_pin )
   end
-  pio.pin.setval( 1, load_pin )
-  pio.pin.setval( 0, load_pin )
+  pio.pin.sethigh( load_pin )
+  pio.pin.setlow( load_pin )
 end
 
 
@@ -134,11 +133,11 @@ function clear()
 -- Now we send only the 9 digit zeros for faster execution
   pio.pin.setval( 0, din_pin )
   for i = 1, 9 do
-    pio.pin.setval( 1, clk_pin )
-    pio.pin.setval( 0, clk_pin )
+    pio.pin.sethigh( clk_pin )
+    pio.pin.setlow( clk_pin )
   end
-  pio.pin.setval( 1, load_pin )
-  pio.pin.setval( 0, load_pin )
+  pio.pin.sethigh( load_pin )
+  pio.pin.setlow( load_pin )
 end
 
 
@@ -149,7 +148,7 @@ function setall()
 end
 
 
-
+--[[
 -------------------------------------------------------------------------------
 -- Now a primitive to write numbers, symbols and possible letters.
 -- We left some examples here but only one setstring() should be needed.
@@ -240,7 +239,7 @@ function setstring3( str, time )
   end
 
 end
-
+--]]
 
 
 
@@ -252,7 +251,6 @@ end
 function setstring( str, time )
   local d = {}                            -- Segments set/lit for each vfd digit
   local dotpending = false
-
 
   for i = 1, #str do
     local cb = strbyte( str, -i, -i )     -- character str.byte buffer
@@ -285,11 +283,9 @@ function hide()
 end
 
 
-
 function show()
   pwm.setup( PWM_ID, PWM_CLK, PWM_DUTY )
 end
-
 
 
 function setintensity( duty )
