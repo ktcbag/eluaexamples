@@ -7,8 +7,8 @@
 --------------------------------------------------------------------------------
 
    These are the notes for the vfd module for eLua.
-   They are based on the tube we had (IV-18) and the decoder we've chosen (MAX6921) but they can
-be easily adapted to interfacing with other VFD tubes and panels.
+   They are based on the tube we had (IV-18) and the decoder we've chosen (MAX6921)
+   but they can be easily adapted to interfacing with other VFD tubes and panels.
 
 ## This is a work-in-progress document, not a final version yet ##
 ## Corrections, refinements and suggestions are welcomed ##
@@ -42,9 +42,14 @@ AND it's digit line with the high voltage Vbb that we'll talk about further down
 We can light up at the same time any combination of segments and digits. We also
 note now that we cannot address/light up at the same time two different segments of
 different digits. To do that, we must light one at a time for short periods, so we
-fool our eyes to see them as if they are both lit simultaneously. This is the only way to "write" different numbers in different digits at the same time and we will call this "multiplexing" our segment and digit buses.
-To complete our IV-18 description we must mention the filament, which is a simple (but fragile!) internal resistance that needs to be powered by a DC voltage (see power supplies below).
-We also note that the segments forming the digits are not equal and this is one of the things that make the IC-18 more appealing too.
+fool our eyes to see them as if they are both lit simultaneously. This is the only
+way to "write" different numbers in different digits at the same time and we will
+call this "multiplexing" our segment and digit buses.
+To complete our IV-18 description we must mention the filament, which is a simple
+(but fragile!) internal resistance that needs to be powered by a DC voltage (see
+power supplies below).
+We also note that the segments forming the digits are not equal and this is one of
+the things that make the IC-18 more appealing too.
   
    
    
@@ -53,13 +58,26 @@ We also note that the segments forming the digits are not equal and this is one 
 -- The Controller
 --
 --------------------------------------------------------------------------------
-  To be able to send the higher voltage required by the VFDs, we used some nice serial to parallel decoders that also offer us the advantage of controlling all the lines with only 3 PIO pins. For this implementation we used the MAX6921. It's data sheet can be found here #### and the model we'll be discussing is the AWI (be careful! Different models have different pinouts!). Of the 20 available outputs, to control one IV-18 we only need to use 17; 8 for the segment bus and 9 for the digit bus.
-The MAX6921 is a simple serial to parallel converter that converts TTL levels serialized to it to high voltage (up to 76Vcc) parallel outputs. It also has a controlled latch so the outputs can be kept stable while new data is being clocked/serialized in.
+  To be able to send the higher voltage required by the VFDs, we used some nice serial
+  to parallel decoders that also offer us the advantage of controlling all the lines
+  with only 3 PIO pins. For this implementation we used the MAX6921. It's data sheet
+  can be found here #### and the model we'll be discussing is the AWI (be careful!
+  Different models have different pinouts!). Of the 20 available outputs, to control
+  one IV-18 we only need to use 17; 8 for the segment bus and 9 for the digit bus.
+  The MAX6921 is a simple serial to parallel converter that converts TTL levels
+  serialized to it to high voltage (up to 76Vcc) parallel outputs. It also has a
+  controlled latch so the outputs can be kept stable while new data is being
+  clocked/serialized in.
+
 Everything is done by 3 control pins:
 
-  DIN (data in) - Receives the logic state of a bit you want to serialize to one of the outputs.
-  CLK (clock) - Receives a positive pulse each time you want to shift in the DIN data. Once you have clocked all your data into this shift register (17 bits in our case) we give a positive pulse on the ... (below)
-  LOAD (load/latch) - Informs the internal latch to transfer the clocked in data to the outputs and retain it until the next load pulse.
+  DIN (data in) - Receives the logic state of a bit you want to serialize to one of the
+	outputs.
+  CLK (clock) - Receives a positive pulse each time you want to shift in the DIN data.
+	Once you have clocked all your data into this shift register (17 bits in our case)
+	we give a positive pulse on the ... (below)
+  LOAD (load/latch) - Informs the internal latch to transfer the clocked in data to the
+	outputs and retain it until the next load pulse.
 	
 This simple protocol can be resumed like:
 - Set DIN with the MSB you want to clock in (DOUT16 on the chip)
@@ -67,7 +85,8 @@ This simple protocol can be resumed like:
 - Repeat the steps above for the other 16 bits until LSB
 - Set the LOAD pin high than low
 
-The MAX6921 is powered by 5Vcc on a single pin and the high voltage to be sent to it's outputs (Vbb) is fed through another single pin.
+The MAX6921 is powered by 5Vcc on a single pin and the high voltage to be sent to it's
+outputs (Vbb) is fed through another single pin.
 
 
 
@@ -84,11 +103,26 @@ The MAX6921 is powered by 5Vcc on a single pin and the high voltage to be sent t
    - TTL (Vcc)
      A regulated 5Vcc to power the MAX6921. The consumption of one chip is under 1mA.
    - High Voltage (Vbb)
-     The literature says we should power the segments and digit lines with around 20Vcc for direct uses and around 50Vcc for multiplexing. Our experience shows that the tube lights quite nicely from 15Vcc up and 20Vcc seems to be enough even for slower multiplexing times. But we have not tested it with higher voltages yet so we expect to update this impressions soon. The current consumption with all the segments lit at 20Vcc is 11mA.
+     The literature says we should power the segments and digit lines with around 20Vcc
+	 for direct uses and around 50Vcc for multiplexing. Our experience shows that the
+	 tube lights quite nicely from 15Vcc up and 20Vcc seems to be enough even for slower
+	 multiplexing times. But we have not tested it with higher voltages yet so we expect
+	 to update this impressions soon. The current consumption with all the segments lit
+	 at 20Vcc is 11mA.
    - Filament Voltage (VFilament)
-     Again, the literature says we must power the filament with something between 4.2 and 5.6 Vcc. Five volt seems to be a good choice, so we can use the same source used to power the MAX6921 (above). Our experience shows that the tube begins to light with 2Vcc on the filament and the intensity of the segments doesn't vary significantly from 2.5 to 5.6 Vcc (at least for 20Vcc being used as "high voltage"). We are using 3Vcc hoping to save some tube's life but it is expected to last for decades even when powered by the maximum allowed voltages. The current consumption here is 50mA at 2.5Vcc and 81mA at 5.0Vcc. This maximum current consumption is actually achieved when all the segments are off.
+     Again, the literature says we must power the filament with something between 4.2
+	 and 5.6 Vcc. Five volt seems to be a good choice, so we can use the same source
+	 used to power the MAX6921 (above). Our experience shows that the tube begins to
+	 light with 2Vcc on the filament and the intensity of the segments doesn't vary
+	 significantly from 2.5 to 5.6 Vcc (at least for 20Vcc being used as "high
+	 voltage"). We are using 3Vcc hoping to save some tube's life but it is expected
+	 to last for decades even when powered by the maximum allowed voltages. The current
+	 consumption here is 50mA at 2.5Vcc and 81mA at 5.0Vcc. This maximum current
+	 consumption is actually achieved when all the segments are off.
    
-  We powered our assembly from a workbench variable power supply so we won't help you too much with analog and regulation details. Good tips and neat switching power supply projects can be found in some of the links below:
+  We powered our assembly from a workbench variable power supply so we won't help you
+  too much with analog and regulation details. Good tips and neat switching power supply
+  projects can be found in some of the links below:
 
 http://www.aplomb.nl/TechStuff/Switcher/Switcher.html
 
@@ -105,7 +139,10 @@ http://www.electricstuff.co.uk/nixpsu.html
 --
 --------------------------------------------------------------------------------
 
-  Hardware control drivers are usually coded in C or assembly, because of critical timings, fast response and predictable execution times requirements. We decided to implement our VFD driver in Lua, to show how you can achieve the same results in eLua with much more simplicity (and Fun! :).
+  Hardware control drivers are usually coded in C or assembly, because of critical
+  timings, fast response and predictable execution times requirements. We decided to
+  implement our VFD driver in Lua, to show how you can achieve the same results in eLua
+  with much more simplicity (and Fun! :).
   To use the eLua VFD module in your application, all you need to do is to include
 a:
    
@@ -114,8 +151,10 @@ require( "vfd" )
 ... which will load the vfd module and make available the main control functions
 in the "vfd." name-space
    
-  To keep things simple, we are doing our control in a bit-bang manner, using 3 pio pins (for CLK, DIN and LOAD).
-  Once the VFD module is loaded by require(), we need to call only once one of it's functions to initialize the module and configure it to your hardware.
+  To keep things simple, we are doing our control in a bit-bang manner, using 3 pio
+  pins (for CLK, DIN and LOAD).
+  Once the VFD module is loaded by require(), we need to call only once one of it's
+  functions to initialize the module and configure it to your hardware.
    
    vfd.init()
       Initializes the VFD module and configures it to your hardware. 
@@ -130,7 +169,9 @@ in the "vfd." name-space
         CLK  - pio.P0_26
         LOAD - pio.P0_28
         
-  You can optionally pass one table as argument with some initialization parameters, if your board is not known to eLua or if you want to change the control pins used by default. The fields are all optional and described below:
+  You can optionally pass one table as argument with some initialization parameters,
+  if your board is not known to eLua or if you want to change the control pins used
+  by default. The fields are all optional and described below:
       
       t = {}
       t.din_pin = the port/pin you want to use for the DIN line (ex: pio.PB_3)
@@ -138,12 +179,17 @@ in the "vfd." name-space
       t.load_pin = idem
       vfd.init( t )
       
-  Now we come to the fun part of it, which is using the VFD module to write what we want to the VFD.
-  The basic primitive is the set() function that takes two arguments: segments and digits
+  Now we come to the fun part of it, which is using the VFD module to write what we
+  want to the VFD.
+  The basic primitive is the set() function that takes two arguments: segments and
+  digits
       
       vfd.set( segments, digits )
       
-      - segments: An 8 bit Lua number, where each bit represent a segment. A logic 1 sets the segment on and a 0 sets it off.  As our IV-18 VFD has (mostly) 7-segment digits with a decimal point, we wired our assembly in a way that it reproduces the usual notation for 7-segment led displays:
+      - segments: An 8 bit Lua number, where each bit represent a segment. A logic 1
+	  sets the segment on and a 0 sets it off.  As our IV-18 VFD has (mostly)
+	  7-segment digits with a decimal point, we wired our assembly in a way that it
+	  reproduces the usual notation for 7-segment led displays:
       
            a
         -------
@@ -161,7 +207,9 @@ in the "vfd." name-space
 
 
 
-      Figure 2 shows the segment identification letters. They are arranged in the "segments" argument of the set() function with "a" being the MSB and "dp" being the LSB, as shown in Figure 3.
+      Figure 2 shows the segment identification letters. They are arranged in the
+	  "segments" argument of the set() function with "a" being the MSB and "dp" being
+	  the LSB, as shown in Figure 3.
       
 
 
@@ -173,13 +221,18 @@ in the "vfd." name-space
 
 
 
-Obs: the ninth "digit" on the left of IV-18 has only two segments. The dot is lit by the "a" bit and the dash by the "b" bit.
+Obs: the ninth "digit" on the left of IV-18 has only two segments. The dot is lit by
+the "a" bit and the dash by the "b" bit.
 
-- digits: Like the segments argument above, digit is a Lua number, this time with 9 bits, each representing a digit position on the VFD. The rightmost digit on the tube correspond to bit0 and the leftmost (actually the dot & dash symbol) to bit8.
+- digits: Like the segments argument above, digit is a Lua number, this time with 9
+bits, each representing a digit position on the VFD. The rightmost digit on the tube
+correspond to bit0 and the leftmost (actually the dot & dash symbol) to bit8.
 
 
 
-  Some examples of the set( segments, digits ) function usage may worth more than my bad english words. It is also easier if we use the 0x Lua hexadecimal notation for numbers in our examples:
+  Some examples of the set( segments, digits ) function usage may worth more than my
+  bad english words. It is also easier if we use the 0x Lua hexadecimal notation for
+  numbers in our examples:
 
 1) Write the number 1 in the leftmost digit:
 
@@ -225,33 +278,51 @@ vfd.set( 0x02, 0x100 )
 
 
 
-  The examples above show how simple it is to light up segments of a digit or equal segments in more than one digit. To write numbers (or some possible letters) that have a different set of lit segments to form it, we need to write them separately and quickly alternate between them (multiplex), to our eyes see them as all ### (continue .......)
+  The examples above show how simple it is to light up segments of a digit or equal
+  segments in more than one digit. To write numbers (or some possible letters) that
+  have a different set of lit segments to form it, we need to write them separately
+  and quickly alternate between them (multiplex), to our eyes see them as all ###
+  (continue .......)
 
       
       
 Writing strings, numbers and symbols:
 
-  To write numbers, symbols and the few possible letters we use the setstring() primitive.
-  As it has to multiplex the numbers for some time to make our eyes think they are all lit at the same time, there is a second argument that controls this "time". It is simply a loop limit control number though, not a time-calibrated value. (Experiment with numbers between 100 and 500 first...). In future implementations, this primitive could return only the segments and digits mapped to the wanted string and the caller program could take care of the multiplexing. Some coroutine-coordinated schemes might bring some fun too.
+  To write numbers, symbols and the few possible letters we use the setstring()
+  primitive.
+  As it has to multiplex the numbers for some time to make our eyes think they are
+  all lit at the same time, there is a second argument that controls this "time". It
+  is simply a loop limit control number though, not a time-calibrated value.
+  (Experiment with numbers between 100 and 500 first...). In future implementations,
+  this primitive could return only the segments and digits mapped to the wanted string
+  and the caller program could take care of the multiplexing. Some coroutine-coordinated
+  schemes might bring some fun too.
 
   The primitive function to write strings is vfd.setstring( str, time ) and it's
 arguments are:
 - str:
   The string of numbers and/or possible symbols and letters to be written to VFD.
   The string is rendered right aligned.
-  Maximum length is 8 characters but the dots (one or more, up to 8) do NOT count as positions (because they will be rendered on the same position of the preceding character).
+  Maximum length is 8 characters but the dots (one or more, up to 8) do NOT count as
+  positions (because they will be rendered on the same position of the preceding
+  character).
   No check is being made for valid strings and sizes, so be careful.
 - time:
-  A number to control the time the string will be shown on the VFD. Pls read the introductory text above.
-  VFD is cleared after the string is shown for this "time" (not time-calibrated !) and the control is given back to the caller program or interpreter.
+  A number to control the time the string will be shown on the VFD. Pls read the
+  introductory text above.
+  VFD is cleared after the string is shown for this "time" (not time-calibrated !) and
+  the control is given back to the caller program or interpreter.
 
       
       
 Easy using all of this:
 
-  To illustrate the uses of the set() and setstring() primitives we wrote two simple programs that define some functions to play with the VFD.
-  artvfd.lua defines some (questionable :) art functions and numvfd.lua defines functions to write strings, numbers and symbols on the VFD.
-  To use them, simply call Lua from the eLua shell, loading the program you want to try first:
+  To illustrate the uses of the set() and setstring() primitives we wrote two simple
+  programs that define some functions to play with the VFD.
+  artvfd.lua defines some (questionable :) art functions and numvfd.lua defines
+  functions to write strings, numbers and symbols on the VFD.
+  To use them, simply call Lua from the eLua shell, loading the program you want to try
+  first:
 
 # lua -l artvfd
 
@@ -259,7 +330,8 @@ or
 
 # lua -l numvfd
 
-  For each one of them, you will then have the following functions defined, that can be called from the interpreter command line or used in directly typed simple scripts:
+  For each one of them, you will then have the following functions defined, that can be
+  called from the interpreter command line or used in directly typed simple scripts:
 
 #### Describe the functions ........
 
