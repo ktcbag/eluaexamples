@@ -1,0 +1,6 @@
+This folder holds temporarily the code for a small AVR-based dedicated controller for VFDs.
+Control will be available though the UART for now and a Lua module will be made available to control it too.
+
+This AVR code was originally developped by Felipe Maimon.
+
+
