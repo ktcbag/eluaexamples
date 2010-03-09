@@ -1,8 +1,10 @@
 ---------------------------------------------------------------
 -- Classic snake game
--- Still testing!
 --
---                                      By Ives Negreiros and TÃ©o Benjamin
+-- 2009 Led Lab @PUC-Rio www.eluaproject.net
+-- Dado Sutter
+-- Ives Negreiros
+-- Téo Benjamin
 ---------------------------------------------------------------
 
 local xMax = math.floor( 128 / 6 ) - 1
