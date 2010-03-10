@@ -11,7 +11,7 @@ local P_DATA    = pio.pin.P0_2 -- Data
 local P_CLK_PD  = pio.pin.P0_3 -- Clock pull down
 local P_DATA_PD = pio.pin.P0_4 -- Data pull down
 
-function init()
+function init( u_id )
   pio.pin.setdir( pio.OUTPUT, P_CLK_PD, P_DATA_PD )
 end
 
@@ -26,3 +26,7 @@ end
 function send( data )
 
 end
+
+function receive( timer )
+
+end 
