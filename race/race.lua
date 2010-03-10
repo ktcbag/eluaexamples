@@ -7,35 +7,43 @@
 --													LED Lab @ PUC-Rio
 --																2010
 --
---  v0.0.1
---    This is the first version of the new eLua game!
+--  v0.0.2
+--    This is the second version of this new eLua game!
+--      + Multiple Levels
 --      - It does have checkpoints
 --      - The speed and controls are being adjusted
 --
+--
 --  To Do:
---    - Multiple levels
 --    - Code cleanup
 --    - Button pooling while waiting
 --    - Comments, comments and more comments
 --
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
-MAX_X = 18
-MAX_Y = 12
-COL_SIZE = math.ceil( MAX_Y / 4 )
-CAR_CHAR = ">"
-WALL_CHAR = "*"
+local MAX_X = 18
+local MAX_Y = 12
+local tmrid = 2
+local COL_SIZE = math.ceil( MAX_Y / 4 )
+local CAR_CHAR = ">"
+local WALL_CHAR = "*"
 
 local pressed = {}
 
-level2="801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801861861861861861861861801801C03A05909891891891891891891891891891891891891891891891891891891891891891891891891891891891909E078018F1861891801861801801801F9F801801801E7F801801F9F801801801CFF801801801801FC78018018018018018019FF801801801801E0F801801801801FF980180180180180180180380780F81F83F87F8FF9FFBFFBFFBFFBFFBFF9FFDFFCFFCFFCFFCFFCFFCFFC7FC3FE3FE3FE3FE3FE1FE1FE1FE1FE1FE1FE1FE1FE1FE1FE1FE1FE1F8C18C18C18C18C18C18C1801801FFF801801801801801801AABA21A21A21A21A319099059059059059259219218218238218218618C1981909809809C09A09A49A45A65A65A45A49A49A53A53A09A01901881841821841881901A01C01801801801925925925925925925925925925925925925925925925925925A49A91AA1AA1AA1AA1AA7A81A81A41A21921CA1AA7AA1CA18B9921A21921D9195DA11911D21D21927921921B21921921921D21921929929B2992D92992992992B92992992992992D949949851851851851851891921A21A21A21A21A21A61AC3A07A0D919891811811889845C45845849A25A15A15A25A49A51A51A51A91A91AA7AA7A91A91A51A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49A49801801801FFF801801801801801801801801F9F801801801801801801801801801801841861BF1BF9BFDBF9BF18618418018098098098098098098098198118318218638438C788F89F99F93F93F99FC9FE8FE8FEC7E47F47F47F4FF4FF47F67E73EF3CF3CE3DE79C79C79C7B87987C87EC3E43E43EC3EC1CC1DC1DC1DC19C19C1BC1BC1BC1BC19C19C1DC1DC1DC19F79F7BF7BC19C19C19C19C19C19C1BDFBDF801801801801801801801801801801801801801801801BFDA05A05A05A05A05A05A05A05905885A45B25A95A4DA25A11A09A05A05A05A05BFD801801801801801801801801801801801801801801801801801801801B0DB0DB0DB0DB0DB0DB0DB0DB0DBFDBFDBFDBFDBFDBFDBFDBFDBFDB0DB0DB0DB0DB0DB0DB0DB0D801801C03C03C03E07801801861861891909861861861C63A65969861861801801801891891891891891891F9F801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801801"
-
-local level = level2
-local level_size = string.len( level ) / 3
+local level
+local level_size
 local level_buffer = {}
 
---require( pd.platform() )
+local levels = { "level1", "level2" }
 
+local NUM_OF_LEVELS = #levels
+
+
+
+-- Init pio function
+-- It must be substituted by this line:
+-- kit = require( pd.platform() )
+-- This only exists because of an error in EK-LM3S8962.lua file
 function init()
 BTN_UP      = pio.PE_0
 BTN_DOWN    = pio.PE_1
@@ -103,6 +111,12 @@ function updateLevelBuffer( col, ... )
   updateLevelBuffer( ... )
 end
 
+function loadLevel( level_name )
+  dofile( "/rom/"..level_name..".lua" )
+  level = _G[ level_name ]
+  level_size = string.len( level ) / 3
+end
+
 -- Car functions
 function drawCar( y, color, movement )
   if ( movement == 0 ) then
@@ -166,13 +180,18 @@ disp.init( 1000000 )
 collectgarbage("collect")
 
 local checkpoint = 0
-
-local tmrid = 2
 local time = 0
-repeat
+local best_time
+local current_level_id = 1
+local delayTime = 100000												-- This value is used for the main delay, to make the game speed faster or slower
+
+
+
+while true do
+
+  loadLevel( levels[ current_level_id ] )
   ycanvas = 96
   cy = MAX_Y / 2												-- Car's Y position ( X position not needed, always 0 )
-  delayTime = 100000												-- This value is used for the main delay, to make the game speed faster or slower
   collumn = checkpoint - 1
   win = false
   LEVEL_X = level_size - ( MAX_X + 1 )
@@ -203,6 +222,7 @@ repeat
       disp.print( "Congratulations!", 10, 48, 15 )
       tmr.delay( 0, 3000000 )
       disp.print( "Congratulations!", 10, 48, 0 )
+      current_level_id = current_level_id + 1
       win = true
       break
     end
@@ -233,23 +253,34 @@ repeat
 
   disp.clear()
   if not win then
-    disp.print( "Game Over :(", 30, 20, 11 )
+    disp.print( "You died :(", 30, 20, 11 )
     disp.print( "Your current time is "..tostring(time), 5, 40, 11 )
-    disp.print( "SELECT to restart", 6, 70, 11 )
+    disp.print( "SELECT to continue", 6, 70, 11 )
   else
-    disp.print( "You won!!!", 30, 20, 11 )
-    disp.print( "Your time was "..tostring(time), 15, 40, 11 )
-    disp.print( "SELECT to restart", 6, 70, 11 )
+    disp.print( "Level complete", 20, 20, 11 )
+    disp.print( "Your time is "..tostring(time), 15, 40, 11 )
+    disp.print( "SELECT to Next Level", 6, 70, 11 )
+    if current_level_id > NUM_OF_LEVELS then
+      if ( not best_time ) or ( time < best_time ) then
+        best_time = time
+      end
+      disp.clear()
+      disp.print( "Finnish!!!", 30, 20, 11 )
+      disp.print( "Your time was "..tostring( time ), 15, 40, 11 )
+      disp.print( "Best time is "..tostring( best_time ), 15, 50, 11 )
+      disp.print( "SELECT to Play Again", 6, 70, 11 )
+      current_level_id = 1
+      checkpoint = 0
+      time = 0
+      delayTime = 100000
+    end
   end
-  enough = true
-  for i=1, 100000 do
+  while true do
     if btn_pressed( BTN_SELECT ) then
-    print( "Checkpoint = ", checkpoint )
-      enough = false
       break
     end
   end
 
-until ( enough )
+end
 
 disp.off()
