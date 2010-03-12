@@ -22,6 +22,10 @@
 #define VFD_CHAR_BYTES		(((VFD_GRIDS + VFD_SEGS) / 8) + 1)
 #define VFD_LAST_CHAR		(VFD_CHAR_BYTES - 1)
 
+#define VFD_SCRLTIMEBASE	25			// Time base for scroll, in ms
+#define VFD_SCROLLSPEED		500 / VFD_SCRLTIMEBASE	// Initial scroll speed - 500 ms
+
+
 #define VFD_PORT			PORTB
 #define VFD_DDR 			DDRB
 #define VFD_LOAD			PB0
@@ -31,7 +35,7 @@
 #define VFD_CLK				PB5
 
 // MAX6921 doesn't have a SS pin, but it is needed for SPI inside AVR
-#define VFD_SS			PB2
+#define VFD_SS				PB2
 
 /** Size of the circular receive buffer, must be power of 2 */
 #define VFD_BUFFER_SIZE		16
@@ -55,8 +59,11 @@ typedef union {
 // Initialise  all the hardware and buffers 
 void vfd_init(void);
 
-// Stops the multiplexing action and set a single char in the display
+// Stops the multiplexing action and set custom segments and grids
 void vfd_set(uint8_t segs, uint16_t grids);
+
+// Stops the multiplexing action and set a char in the display
+void vfd_setchar(char data, uint16_t grids);
 
 // Clears the display using blank
 #define vfd_clear() SET_BLANK
@@ -69,16 +76,13 @@ void vfd_brightness(uint8_t duty);
 
 // Display a string of up to 16 char in the VFD
 // Dots ('.') are not counted as the length, as it is integrated
-// with the previous char.
+// with the previous char, so the max string lenght is VFD_BUFFER_SIZE*2
 // If string is empty (""), the last one stored in the buffer is used
 // Strings are null (/0) terminated
 void vfd_setstring(const char *str);
 
-// Same as above, but the string is in the flash memory
-void vfd_setstring_P(const char *str);
-
 // Set the scroll speed. The parameter is the time it takes to scroll 1 char, in 
-// multiples of 100 ms
+// multiples of VFD_SCRLTIMEBASE ms. Can be anything between [0..255]
 void vfd_scrollspeed(uint8_t speed);
 
 #endif

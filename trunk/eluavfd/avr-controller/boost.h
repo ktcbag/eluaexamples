@@ -24,7 +24,7 @@
 #include "VFD.h"
 
 // Tensões máximas e mínimas de entrada
-#define VI_CONV_FACT	(12 * 1024UL) / (12 + 330) / 1.1
+#define VI_CONV_FACT	(12.0 * 1024) / (12 + 330) / 1.1
 #define MIN_VI_COUNT	(uint16_t)(8 * VI_CONV_FACT + 0.5)
 #define MAX_VI_COUNT	(uint16_t)(16 * VI_CONV_FACT + 0.5)
 

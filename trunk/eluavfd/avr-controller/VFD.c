@@ -23,15 +23,9 @@ FUSES =
 
 static inline void HW_Init (void) __attribute__ ((always_inline));
 
-volatile uint8_t abc;
-
 int main (void)
 {
 	HW_Init();
-
-	abc = (uint8_t)(VI_CONV_FACT + 0.5);
-
-	abc = (uint8_t)(VO_CONV_FACT + 0.5);
 
 	// enquanto a tensão de entrada estiver abaixo de 8V e acima de 16V, não faz nada
 	do
@@ -54,8 +48,8 @@ int main (void)
 	sei();
 
 
-	uart_puts_P(PSTR("Inicio VFD\r\n"));
-	vfd_setstring("Boost");
+	uart_puts_P(PSTR("Inicio VFD\r"));
+	vfd_setstring("Boost 123456");
 
 	for(;;)
 	{
