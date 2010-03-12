@@ -16,11 +16,11 @@
 #include "VFD.h"
 #include "timeout.h"
 
-#define USART_BAUD_RATE				57600UL
+#define USART_BAUD_RATE				115200UL
 #define MY_UBRR						(((F_CPU / (USART_BAUD_RATE * 16UL))) - 1) 
 
 /** Size of the circular receive buffer, must be power of 2 */
-#define UART_RX_BUFFER_SIZE		8
+#define UART_RX_BUFFER_SIZE		32
 #define UART_RX_BUFFER_MASK		( UART_RX_BUFFER_SIZE - 1)
 
 #define RX			PD0

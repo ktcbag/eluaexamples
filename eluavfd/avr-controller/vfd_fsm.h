@@ -33,6 +33,9 @@ enum estados { SM_IDLE,
 					SM_GET_CMD,
 						SM_WRITE, SM_WR_SP, SM_WR_KP, SM_WR_KI, SM_WR_LD,
 						SM_READ,
+					SM_VFD_CMD,
+						SM_VFD_SET, SM_VFD_SETCHAR, SM_VFD_STR,
+						SM_VFD_BRT, SM_VFD_SCRL,
 				 SM_END,
 				 SM_ERROR
 				};
@@ -45,7 +48,7 @@ Todas as mensagens iniciam com o caracter 'b', seguido por um caracter
 de comando ('r', para comandos de leitura, ou 'w', para comandos de escrita), 
 seguidos de seus parâmetros. Em nenhum parâmetro do conversor boost a string
 possui caracteres terminadores, como o /0 do C. Ao final de todos os comandos
-de escrita ou leitura, o caracter '!' é enviado para a serial, confirmando que
+de escrita ou leitura, o caractere '!' é enviado para a serial, confirmando que
 o comando foi executado. Caso receba "?x" (x é um número), o erro x aconteceu.
 Os valores de x estão descritos mais abaixo.
 
@@ -107,7 +110,7 @@ Leitura:
 #define CB_RD_VO		'o'
 #define CB_FINAL_MSG	'!'
 
-// Valores de erro para a máquina de estado
+// Valores de erro para o boost
 #define CB_ERROR_MSG	'?'
 #define CB_ERROR_START	1		// Caracter de início inválido
 #define CB_ERROR_CMD	2		// Caracter de comando inválido
@@ -116,7 +119,63 @@ Leitura:
 #define CB_ERROR_RD		5		// Caracter de leitura inválido
 #define CB_ERROR_TO		6		// Timeout na serial
 
+/*
+Comandos para o VFD:
+
+Todas as mensagens iniciam com o caracter 'v', seguido por um caracter
+de comando e seus parâmetros. Ao final de todos os comandos, o caractere '!'
+é enviado para a serial, confirmando que o comando foi executado.
+
+- Set - Recebe 5 bytes em ASCII representando o valor em hexa dos segmentos
+		e grids, no formato ssggg. Os valores de segmentos podem ir de 00 até
+		FF e os valores de grid podem ir de 000 até 1FF. Exemplo:
+
+		Acender todos os segmentos de todos os grids: vtff1ff
+		Aparecer os segmentos g do 1o e 2o grid: vt02003
+
+- Set Char - Recebe 4 bytes em ASCII representando o caractere que se deseja
+		mostrar e os grids, no formato cggg. Exemplo:
+
+		Aparecer a letra F no 4o grid: vrf008
+
+- Clear - apaga o display. Exemplo: vc
+
+- Set All - acende todos os segmentos de todos os grids do display: Exemplo: va
+
+- String - Recebe uma string de até 32 bytes em ASCII, terminado com o
+		caractere \r (Enter). Se existir algum caractere '.' na string, o ponto
+		será colocado no dp do caractere anterior. Os 32 bytes são o
+		equivalente a 16 caracteres mostráveis + 16 pontos.
+		Exemplo:
+
+		Mostra "teste" no display: vsteste'\r'
+		Mostra "elua" no display: vselua'\r'
+
+- Brilho - Recebe 2 bytes em ASCII representando o valor em hexadecimal do
+		brilho que se deseja. 00 é display apagado e FF brilho máximo.
+		Exemplo:
+
+		Brilho a aproximadamente 50%: vb80
+
+- Scroll - Recebe 2 bytes em ASCII representando o valor em hexadecimal do
+		tempo de mudança de caractere de scroll que se deseja, em multiplos de
+		25 ms. Exemplo:
+
+		Scroll em 100 ms: vl04
+		Scroll em 500 ms: vl14
+*/
 #define VFD_INICIO		'v'
+#define VFD_SET			't'
+#define VFD_SETCHAR		'r'
+#define VFD_CLEAR		'c'
+#define VFD_ALL			'a'
+#define VFD_STRING		's'
+#define VFD_BRT			'b'
+#define VFD_SCRL		'l'
+
+#define VFD_ERROR_CMD	7		// Caracter de comando inválido
+#define VFD_ERROR_VAL	8		// Valor recebido inválido
+#define VFD_ERROR_STR	9		// String inválida (mais de 32 caracteres)
 
 void State_Machine (void);
 

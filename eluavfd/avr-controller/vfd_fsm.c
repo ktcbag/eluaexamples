@@ -14,13 +14,14 @@
 enum estados CurState = SM_IDLE;
 
 uint8_t TipoErro;
-uint8_t SP_cntr;
-uint16_t SP_novo;
+uint8_t Counter;
+uint16_t tempu16;
+uint8_t tempu8;
+char buffer[33];		// 32 bytes + \0 terminador
 
 void State_Machine (void)
 {
 	uint8_t uart_tmp;
-	char buffer[8];
 
 	// Início da máquina de estados para leitura da serial
 		
@@ -55,14 +56,21 @@ void State_Machine (void)
 
 		// Confere se o primeiro byte é 'b', já que todos os comandos começam com ele
 		case SM_START:
-			if (CB_INICIO == uart_getc())
+			
+			switch (uart_getc())
 			{
+				case CB_INICIO:
 					CurState = SM_GET_CMD;
-			}
-			else
-			{
-				CurState = SM_ERROR;
-				TipoErro = CB_ERROR_START;
+					break;
+
+				case VFD_INICIO:
+					CurState = SM_VFD_CMD;
+					break;
+
+				default:
+					CurState = SM_ERROR;
+					TipoErro = CB_ERROR_START;
+					break;
 			}
 			break;
 				
@@ -80,8 +88,8 @@ void State_Machine (void)
 			// leitura dos novos valores
 				case CB_CMD_WR:
 					CurState = SM_WRITE;
-					SP_cntr = 0;
-					SP_novo = 0;
+					Counter = 0;
+					tempu16 = 0;
 					break;
 
 				default:
@@ -126,29 +134,29 @@ void State_Machine (void)
 			// só aceita se for número
 			if ((uart_tmp >='0') && (uart_tmp <= '9'))
 			{
-				SP_novo *= 10;
-				SP_novo += uart_tmp - '0';		// converte para valor numérico
-				SP_cntr++;
+				tempu16 *= 10;
+				tempu16 += uart_tmp - '0';		// converte para valor numérico
+				Counter++;
 
-				if (SP_cntr > 2)				// Se já leu os 3 bytes
+				if (Counter > 2)				// Se já leu os 3 bytes
 				{
 					// verifica se está dentro da faixa aceitável
-					if ((SP_novo >= 80 ) && (SP_novo <= 240))
+					if ((tempu16 >= 80 ) && (tempu16 <= 240))
 					{
 						// Converte e salva o valor do set-point novo
 						// Teoricamente deveria multiplicar por 3,92, mas como
 						// não dá, faz uma leve gambiarra para somente utilizar 
 						// números inteiros.
-						SP_novo = ((SP_novo * 136 + 25) / 50);
+						tempu16 = ((tempu16 * 136 + 25) / 50);
 
 						ATOMIC_BLOCK(ATOMIC_FORCEON)
 						{
-							tPIsat_params.sp = SP_novo;
+							tPIsat_params.sp = tempu16;
 						}
 
 						OSC_TRIGGER;
 
-						eeprom_write_word(&ee_PI_SP, SP_novo);
+						eeprom_write_word(&ee_PI_SP, tempu16);
 
 						CurState = SM_END;
 					}
@@ -173,32 +181,32 @@ void State_Machine (void)
 			// só aceita se for número
 			if ((uart_tmp >='0') && (uart_tmp <= '9'))
 			{
-				SP_novo *= 10;
-				SP_novo += uart_tmp - '0';		// converte para valor numérico
-				SP_cntr++;
+				tempu16 *= 10;
+				tempu16 += uart_tmp - '0';		// converte para valor numérico
+				Counter++;
 
-				if (SP_cntr > 3)				// Se já leu os 3 bytes
+				if (Counter > 3)				// Se já leu os 3 bytes
 				{
 					ATOMIC_BLOCK(ATOMIC_FORCEON)
 					{
 						if (SM_WR_KP == CurState)
 						{
-							tPIsat_params.w_kp_pu = SP_novo;
+							tPIsat_params.w_kp_pu = tempu16;
 						}
 						else
 						{
-							tPIsat_params.w_ki_pu = SP_novo;
+							tPIsat_params.w_ki_pu = tempu16;
 						}
 						tPIsat_params.l_integrator_dpu = 0;
 					}
 
 					if (SM_WR_KP == CurState)
 					{
-						eeprom_write_word(&ee_PI_kp, SP_novo);
+						eeprom_write_word(&ee_PI_kp, tempu16);
 					}
 					else
 					{
-						eeprom_write_word(&ee_PI_ki, SP_novo);
+						eeprom_write_word(&ee_PI_ki, tempu16);
 					}
 
 					CurState = SM_END;
@@ -236,15 +244,15 @@ void State_Machine (void)
 					break;
 
 				case CB_RD_VI:
-					sprintf(buffer, "%03d", (VoltInp * 10 + 41) / 82);
+					sprintf(buffer, "%03d", (VoltInp * 10) / (uint8_t)(VI_CONV_FACT + 0.5) );
 					break;
 
 				case CB_RD_VO:
 					ATOMIC_BLOCK(ATOMIC_FORCEON)
 					{
-						SP_novo = tPIsat_params.pv;
+						tempu16 = tPIsat_params.pv;
 					}					
-					sprintf(buffer, "%03d", (SP_novo * 100) / 272);
+					sprintf(buffer, "%03d", (tempu16 * 10) / (uint8_t)(VO_CONV_FACT + 0.5));
 					break;
 				
 				default:
@@ -258,6 +266,217 @@ void State_Machine (void)
 				uart_puts(buffer);
 				CurState = SM_END;
 			} 
+			break;
+
+		case SM_VFD_CMD:
+			Counter = 0;
+			tempu16 = 0;
+			tempu8 = 0;
+			switch (uart_getc())
+			{
+				case VFD_SET:
+					CurState = SM_VFD_SET; 
+					break;
+				
+				case VFD_SETCHAR:
+					CurState = SM_VFD_SETCHAR;
+					break;
+
+				case VFD_CLEAR:
+					vfd_clear();
+					CurState = SM_END;
+					break;
+
+				case VFD_ALL:
+					vfd_setall();
+					CurState = SM_END;
+					break;
+
+				case VFD_STRING:
+					CurState = SM_VFD_STR;
+					break;
+
+				case VFD_BRT:
+					CurState = SM_VFD_BRT;
+					break;
+
+				case VFD_SCRL:
+					CurState = SM_VFD_SCRL;
+					break;
+			}
+			break;
+
+		case SM_VFD_SET:
+			uart_tmp = uart_getc();
+
+			switch (uart_tmp)
+			{
+				case 'a'...'f':
+					uart_tmp -= 0x20;
+				case 'A'...'F':
+					uart_tmp -= 'A';
+					uart_tmp += 10;
+					break;
+				case '0'...'9':
+					uart_tmp -= '0';
+					break;
+				default:
+					CurState = SM_ERROR;
+					TipoErro = VFD_ERROR_VAL;
+					break;
+			}
+			if (Counter++ < 2)
+			{
+				tempu8 *= 16;
+				tempu8 += uart_tmp;
+			}
+			else 
+			{
+				tempu16 *= 16;
+				tempu16 += uart_tmp;
+
+				if (Counter > 4)
+				{
+					if (tempu16 > 0x1FF)
+					{
+						CurState = SM_ERROR;
+						TipoErro = VFD_ERROR_VAL;
+					}
+					else
+					{
+						vfd_set(tempu8, tempu16);
+						CurState = SM_END;
+					}
+				}
+			}
+			break;
+
+		case SM_VFD_SETCHAR:
+			uart_tmp = uart_getc();
+
+			if (Counter++ == 0)
+			{
+				tempu8 = uart_tmp;
+			}
+			else
+			{
+				switch (uart_tmp)
+				{
+					case 'a'...'f':
+						uart_tmp -= 0x20;
+					case 'A'...'F':
+						uart_tmp -= 'A';
+						uart_tmp += 10;
+						break;
+					case '0'...'9':
+						uart_tmp -= '0';
+						break;
+					default:
+						CurState = SM_ERROR;
+						TipoErro = VFD_ERROR_VAL;
+						break;
+				}
+
+				tempu16 *= 16;
+				tempu16 += uart_tmp;
+
+				if (Counter > 3)
+				{
+					if (tempu16 > 0x1FF)
+					{
+						CurState = SM_ERROR;
+						TipoErro = VFD_ERROR_VAL;
+					}
+					else
+					{
+						vfd_setchar(tempu8, tempu16);
+						CurState = SM_END;
+					}
+				}
+			}
+			break;
+
+		case SM_VFD_BRT:
+			uart_tmp = uart_getc();
+
+			switch (uart_tmp)
+			{
+				case 'a'...'f':
+					uart_tmp -= 0x20;
+				case 'A'...'F':
+					uart_tmp -= 'A';
+					uart_tmp += 10;
+					break;
+				case '0'...'9':
+					uart_tmp -= '0';
+					break;
+				default:
+					CurState = SM_ERROR;
+					TipoErro = VFD_ERROR_VAL;
+					break;
+			}
+			tempu8 *= 16;
+			tempu8 += uart_tmp;
+			Counter++;
+
+			if (Counter > 1)
+			{
+				vfd_brightness(tempu8);
+				CurState = SM_END;
+			}
+			break;
+
+		case SM_VFD_SCRL:
+			uart_tmp = uart_getc();
+
+			switch (uart_tmp)
+			{
+				case 'a'...'f':
+					uart_tmp -= 0x20;
+				case 'A'...'F':
+					uart_tmp -= 'A';
+					uart_tmp += 10;
+					break;
+				case '0'...'9':
+					uart_tmp -= '0';
+					break;
+				default:
+					CurState = SM_ERROR;
+					TipoErro = VFD_ERROR_VAL;
+					break;
+			}
+			tempu8 *= 16;
+			tempu8 += uart_tmp;
+			Counter++;
+
+			if (Counter > 1)
+			{
+				vfd_scrollspeed(tempu8);
+				CurState = SM_END;
+			}
+			break;
+
+		case SM_VFD_STR:
+			uart_tmp = uart_getc();
+
+			if (uart_tmp == 0x0D)		// 0x0D = Enter
+			{
+				buffer[Counter] = 0;
+
+				vfd_setstring(buffer);
+				CurState = SM_END;
+			}
+			else
+			{
+				buffer[Counter] = uart_tmp;
+				Counter++;
+
+				if (Counter > 32)
+				{
+					CurState = SM_ERROR;
+					TipoErro = VFD_ERROR_STR;
+				}
+			}
 			break;
 
 		case SM_END:
