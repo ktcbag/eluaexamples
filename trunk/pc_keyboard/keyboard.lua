@@ -13,17 +13,23 @@ local P_DATA_PD = pio.pin.P0_4 -- Data pull down
 
 function init()
   pio.pin.setdir( pio.OUTPUT, P_CLK_PD, P_DATA_PD )
+  pio.pin.setdir( pio.INPUT, P_CLK, P_DATA )
 end
 
 function disable_communication()
-  pio.pin.setval( 1, P_DATA_PD, P_CLK_PD )
+  pio.pin.setval( 1, P_CLK_PD )
+  tmr.delay( timer, 110 ) -- Min 100 us
 end
 
 function enable_communication()
-  pio.pin.setval( 0, P_DATA_PD, P_CLK_PD )
+  pio.pin.setval( 0, P_CLK_PD )
 end
 
-function check_parity( data, partiry )
+function request_send()
+  pio.pin.setval( 1, P_DATA_PD )
+end
+
+function parity( data )
   local count = 0
 
   for i= 1, 8 do
@@ -32,19 +38,75 @@ function check_parity( data, partiry )
     end
   end
 
+  return bit.bnot( bit.band( data, 1 ) )
+
+  --[[
   if bit.band( data, 1 ) ~= parity then
     return true
   else
     return false
   end
+  --]]
 end
 
-function send( data )
+function send( data, timer )
+  -- Request send
+  disable_communication()
+  request_send()
+  enable_communication()
 
+  local c            -- Temporary: Current char
+  local qtd = #data  -- Data length
+
+  for cur = 1, qtd do
+    -- Get current char code
+    c = string.byte( string.sub( data, cur, cur ) )
+
+    -- Send data
+    for bit = 1, 8 do  
+      -- Wait for device to clock to send Data
+      while pio.pin.getval( P_CLK ) ~= 0 do
+      end
+
+      -- Put data bit
+      pio.pin.setval( bit.isclear( c, bit ), P_DATA_PD ) -- Inverted ( pull down )
+
+      -- Wait for clock to get high
+      while pio.pin.getval( P_CLK ) ~= 1 do
+      end
+    end
+
+    -- Send parity bit
+      -- Wait for device to clock to send Data
+      while pio.pin.getval( P_CLK ) ~= 0 do
+      end
+
+      -- Put parity bit
+      pio.pin.setval( bit.bnot( parity( c ) ), P_DATA_PD ) -- Inverted ( pull down )
+
+      -- Wait for clock to get high
+      while pio.pin.getval( P_CLK ) ~= 1 do
+      end
+
+    -- Stop bit 
+    pio.pin.setval( 0, P_DATA_PD )
+
+    -- Wait for acknowledge bit
+      -- Wait for the device to bring Data low
+      while pio.pin.getval( P_DATA ) ~= 0 do
+      end
+
+      -- Wait for the device to bring Clock low
+      while pio.pin.getval( P_CLK ) ~= 0 do
+      end
+
+      -- Wait for the device to release Data and Clock
+      while pio.pin.getval( P_CLK ) ~= 1 or pio.pin.getval( P_DATA ) ~= 1 do
+      end
+  end
 end
 
 function receive( timer, timeout )
-  pio.pin.setdir( pio.INPUT, P_CLK, P_DATA )
   enable_communication()
 
   tmr.setclock( timer, 1000 )
@@ -96,7 +158,7 @@ function receive( timer, timeout )
       bits_read = 10
     end
 
-    if bits_read == 11 and not check_parity( bits_read, bit.band( data_in, 2^9 ) ) then -- Parity
+    if bits_read == 11 and check_parity( bits_read ) ~= bit.band( data_in, 2^9 ) then -- Parity
       send_invalid_command()
       bits_read == 0
     end
@@ -114,4 +176,6 @@ function receive( timer, timeout )
     end
   end
 
+  return data_out
 end 
+
