@@ -6,27 +6,28 @@
 ------------------------------------------------
 
 -- IO Pins connected to the keyboard
-local P_CLK     = pio.pin.P0_1 -- Clock
-local P_DATA    = pio.pin.P0_2 -- Data
-local P_CLK_PD  = pio.pin.P0_3 -- Clock pull down
-local P_DATA_PD = pio.pin.P0_4 -- Data pull down
+local P_CLK     = pio.PC_7 -- Clock
+local P_DATA    = pio.PC_5 -- Data
+local P_CLK_PD  = pio.PG_0 -- Clock pull down
+local P_DATA_PD = pio.PA_7 -- Data pull down
 
 function init()
   pio.pin.setdir( pio.OUTPUT, P_CLK_PD, P_DATA_PD )
   pio.pin.setdir( pio.INPUT, P_CLK, P_DATA )
+  pio.pin.setval( 1, P_DATA_PD, P_CLK_PD )
 end
 
-function disable_communication()
-  pio.pin.setval( 1, P_CLK_PD )
+function disable_communication( timer )
+  pio.pin.setval( 0, P_CLK_PD )
   tmr.delay( timer, 110 ) -- Min 100 us
 end
 
 function enable_communication()
-  pio.pin.setval( 0, P_CLK_PD )
+  pio.pin.setval( 1, P_CLK_PD )
 end
 
 function request_send()
-  pio.pin.setval( 1, P_DATA_PD )
+  pio.pin.setval( 0, P_DATA_PD )
 end
 
 function parity( data )
@@ -39,19 +40,11 @@ function parity( data )
   end
 
   return bit.bnot( bit.band( data, 1 ) )
-
-  --[[
-  if bit.band( data, 1 ) ~= parity then
-    return true
-  else
-    return false
-  end
-  --]]
 end
 
 function send( data, timer )
   -- Request send
-  disable_communication()
+  disable_communication( timer )
   request_send()
   enable_communication()
 
@@ -63,17 +56,23 @@ function send( data, timer )
     c = string.byte( string.sub( data, cur, cur ) )
 
     -- Send data
-    for bit = 1, 8 do  
+    for cbit = 1, 8 do  
       -- Wait for device to clock to send Data
       while pio.pin.getval( P_CLK ) ~= 0 do
       end
 
       -- Put data bit
-      pio.pin.setval( bit.isclear( c, bit ), P_DATA_PD ) -- Inverted ( pull down )
+      if bit.isset( c, cbit ) then
+        pio.pin.setval( 1, P_DATA_PD )
+      else
+        pio.pin.setval( 0, P_DATA_PD )
+      end
 
       -- Wait for clock to get high
       while pio.pin.getval( P_CLK ) ~= 1 do
       end
+
+      print( "Bit: " .. cbit )
     end
 
     -- Send parity bit
@@ -82,14 +81,14 @@ function send( data, timer )
       end
 
       -- Put parity bit
-      pio.pin.setval( bit.bnot( parity( c ) ), P_DATA_PD ) -- Inverted ( pull down )
+      pio.pin.setval( parity( c ), P_DATA_PD )
 
       -- Wait for clock to get high
       while pio.pin.getval( P_CLK ) ~= 1 do
       end
 
     -- Stop bit 
-    pio.pin.setval( 0, P_DATA_PD )
+    pio.pin.setval( 1, P_DATA_PD )
 
     -- Wait for acknowledge bit
       -- Wait for the device to bring Data low
@@ -142,7 +141,7 @@ function receive( timer, timeout )
     if pio.pin.getval( P_CLK ) == 0 then
       tc = tmr.start( timer )
       data_in = bit.lshift( data_in, 1 )
-      datain = bit.bor( datain, pio.pin.getval( P_DATA ) )
+      data_in = bit.bor( data_in, pio.pin.getval( P_DATA ) )
       bits_read = bits_read + 1
     end
 
@@ -153,14 +152,14 @@ function receive( timer, timeout )
       data_in = bit.clear( data_in, 11 )
     end
 
-    if bits_read == 11 not bit.isset( data_in, 1 ) then -- Stop bit
+    if bits_read == 11 and bit.isclear( data_in, 1 ) then -- Stop bit
       -- If its not 1, something is wrong, ignore
       bits_read = 10
     end
 
-    if bits_read == 11 and check_parity( bits_read ) ~= bit.band( data_in, 2^9 ) then -- Parity
+    if bits_read == 11 and parity( bits_read ) ~= bit.band( data_in, 2^9 ) then -- Parity
       send_invalid_command()
-      bits_read == 0
+      bits_read = 0
     end
 
     if bits_read == 11 then -- Everithing OK
