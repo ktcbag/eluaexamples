@@ -57,54 +57,117 @@ function send( data, timer )
 
     -- Send data
     for cbit = 1, 8 do  
+      print( "  Bit: " .. cbit )
+
       -- Wait for device to clock to send Data
-      while pio.pin.getval( P_CLK ) ~= 0 do
+      while pio.pin.getval( P_CLK ) ~= 1 do
       end
 
       -- Put data bit
       if bit.isset( c, cbit ) then
-        pio.pin.setval( 1, P_DATA_PD )
-      else
         pio.pin.setval( 0, P_DATA_PD )
+      else
+        pio.pin.setval( 1, P_DATA_PD )
       end
 
       -- Wait for clock to get high
-      while pio.pin.getval( P_CLK ) ~= 1 do
+      while pio.pin.getval( P_CLK ) ~= 0 do
       end
 
-      print( "Bit: " .. cbit )
+      print( "- Bit: " .. cbit )
     end
 
     -- Send parity bit
       -- Wait for device to clock to send Data
-      while pio.pin.getval( P_CLK ) ~= 0 do
-      end
-
-      -- Put parity bit
-      pio.pin.setval( parity( c ), P_DATA_PD )
-
-      -- Wait for clock to get high
       while pio.pin.getval( P_CLK ) ~= 1 do
       end
 
-    -- Stop bit 
-    pio.pin.setval( 1, P_DATA_PD )
-
-    -- Wait for acknowledge bit
-      -- Wait for the device to bring Data low
-      while pio.pin.getval( P_DATA ) ~= 0 do
+      -- Put parity bit
+      if parity( c ) == 1 then
+        pio.pin.setval( 0, P_DATA_PD )
+      else
+        pio.pin.setval( 1, P_DATA_PD )
       end
 
-      -- Wait for the device to bring Clock low
+      -- Wait for clock to get high
       while pio.pin.getval( P_CLK ) ~= 0 do
       end
 
+    -- Stop bit 
+    pio.pin.setval( 0, P_DATA_PD )
+
+    -- Wait for acknowledge bit
+      -- Wait for the device to bring Data low
+      while pio.pin.getval( P_DATA ) ~= 1 do
+      end
+
+      -- Wait for the device to bring Clock low
+      while pio.pin.getval( P_CLK ) ~= 1 do
+      end
+
       -- Wait for the device to release Data and Clock
-      while pio.pin.getval( P_CLK ) ~= 1 or pio.pin.getval( P_DATA ) ~= 1 do
+      while pio.pin.getval( P_CLK ) ~= 0 or pio.pin.getval( P_DATA ) ~= 0 do
       end
   end
 end
 
+function receive( timer )
+  enable_communication()
+
+  local count = 0
+  local data = 0
+  local data_out = ""
+  local time
+  
+  -- Read 11 bits
+  while true do
+    -- Wait for clock ( or timeout )
+    tmr.setclock( timer, 1 )
+    time = tmr.start( timer )
+    while pio.pin.getval( P_CLK ) ~= 0 do
+      if tmr.gettimediff( timer, time, tmr.read( timer ) ) > 50 then
+        return data_out
+      end
+    end
+
+    tmr.delay( timer, 15 )
+
+    -- parity bit
+    if count == 10 then
+      count = count + 1
+    end
+
+    -- read data
+    if count > 0 and count < 10 then
+      data = bit.rshift( data, 1 )
+      if pio.pin.isset( P_DATA ) then
+        data = bit.bor( data, 1 )
+      end
+
+      count = count + 1
+    end
+
+    -- check if it's the start bit
+    if count == 0 and pio.pin.getval( P_DATA ) == 0 then 
+      count = count + 1
+    end
+
+    -- Wait for clock
+    while pio.pin.getval( P_CLK ) ~= 1 do
+    end
+
+    -- Stop bit
+    if count == 11 then
+      count = 0
+      data_out = data_out .. string.char( data )
+      data = 0
+    end
+  end
+
+  return data_out
+end
+
+--[[
 function receive( timer, timeout )
   enable_communication()
 
@@ -177,4 +240,5 @@ function receive( timer, timeout )
 
   return data_out
 end 
+--]]
 
