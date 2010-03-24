@@ -1,9 +1,12 @@
-------------------------------------------------
+--------------------------------------------------
 --
 --   This is an example of how to communicate 
 --   with a PS2 pc keyboard.
 --   v0.1
-------------------------------------------------
+--
+--   by Thiago Naves, Led Lab, PUC-Rio, march 2010
+--
+--------------------------------------------------
 
 -- IO Pins connected to the keyboard
 local P_CLK     = pio.PC_7 -- Clock
