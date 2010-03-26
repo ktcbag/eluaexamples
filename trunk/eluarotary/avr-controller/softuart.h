@@ -4,7 +4,7 @@
 #define F_CPU 3686400UL
 #endif
 
-#define SOFTUART_BAUD_RATE      2400
+#define SOFTUART_BAUD_RATE      19200
 
 #define SOFTUART_RXPIN   PINB
 #define SOFTUART_RXDDR   DDRB

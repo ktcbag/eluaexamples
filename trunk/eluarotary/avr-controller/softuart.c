@@ -288,9 +288,10 @@ unsigned char softuart_can_transmit( void )
 
 void softuart_putchar( const char ch )
 {
-	while ( flag_tx_ready );
-		// wait for transmitter ready
-		// add watchdog-reset here if needed;
+	while ( flag_tx_ready ) {
+		; // wait for transmitter ready
+		  // add watchdog-reset here if needed;
+	}
 
 	// invoke_UART_transmit
 	timer_tx_ctr       = 3;
@@ -298,12 +299,14 @@ void softuart_putchar( const char ch )
 	internal_tx_buffer = ( ch<<1 ) | 0x200;
 	flag_tx_ready      = SU_TRUE;
 }
-
-void softuart_puts( const char *s ){
-	while ( *s )
+	
+void softuart_puts( const char *s )
+{
+	while ( *s ) {
 		softuart_putchar( *s++ );
+	}
 }
-
+	
 void softuart_puts_p( const char *prg_s )
 {
 	char c;
