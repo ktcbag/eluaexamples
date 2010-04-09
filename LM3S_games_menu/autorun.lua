@@ -6,7 +6,7 @@ local menuselection = function()
   local kit = require( pd.board() )
   local pressed = {} -- pressed[ button ] is true if the corresponding button was pressed, or nil if not
   local color
-  local options = { "Pong", "Tetrives", "Spaceship", "Logo", "Led", "PWMLed", "Snake" }
+  local options = { "Pong", "Tetrives", "Spaceship", "Race", "Snake", "Logo" }
   local selection = 1
 
   local function button_clicked( button )
