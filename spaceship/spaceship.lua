@@ -24,7 +24,7 @@ local shotChar = "-"					-- This char is printed to represent the shots
 local enemyChar = "@"					-- This char is used to represent the enemies
 local sy = 16							-- Ship's Y position
 local sx = 0							-- Ship's X position
-local bullets = 50						-- Number of bullets left
+local bullets = 70						-- Number of bullets left
 local score = 0							-- Player's score
 local numOfEnemies = 5					-- Number of simultaneous enemies
 local won = false						-- If the player won the game, this value is true. If not, it's false.
@@ -266,9 +266,9 @@ while true do
 end
 if won then
   lm3s.disp.clear()
-  lm3s.disp.print( "You won!", 50, 30, 11 )
-  lm3s.disp.print( "Congratulations!", 70, 20, 11 )
+  lm3s.disp.print( "You won!", 20, 30, 11 )
+  lm3s.disp.print( "Congratulations!", 5, 50, 11 )
 else
   lm3s.disp.clear()
-  lm3s.disp.print( "Game Over! :(", 60, 20, 11 )
+  lm3s.disp.print( "Game Over! :(", 20, 20, 11 )
 end
