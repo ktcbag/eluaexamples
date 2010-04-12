@@ -251,7 +251,7 @@ while true do
   disp.clear()
   if not win then
     disp.print( "You died :(", 30, 20, 11 )
-    disp.print( "Your current time is "..tostring(time), 5, 40, 11 )
+    disp.print( "Current time is "..tostring(time), 5, 40, 11 )
     disp.print( "SELECT to continue", 6, 70, 11 )
   else
     disp.print( "Level complete", 20, 20, 11 )
