@@ -263,8 +263,8 @@ while true do
       end
       disp.clear()
       disp.print( "Finnish!!!", 30, 20, 11 )
-      disp.print( "Your time was "..tostring( time ), 15, 40, 11 )
-      disp.print( "Best time is "..tostring( best_time ), 15, 50, 11 )
+      disp.print( "Time was "..tostring( time ), 15, 40, 11 )
+      disp.print( "Best time: "..tostring( best_time ), 15, 50, 11 )
       disp.print( "SELECT to Play Again", 6, 70, 11 )
       current_level_id = 1
       checkpoint = 0
