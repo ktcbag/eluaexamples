@@ -192,7 +192,6 @@ function art7()
     end
     vfd.set ( 0x03, 0x100 )
     k = term.getchar( term.NOWAIT )
-    handlekbd( k )
   until k == term.KC_ESC
   vfd.clear()
 end
