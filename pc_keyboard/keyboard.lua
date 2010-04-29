@@ -9,10 +9,19 @@
 --------------------------------------------------
 
 -- IO Pins connected to the keyboard
+--  LM3S
+--[[
 local P_CLK     = pio.PC_7 -- Clock
 local P_DATA    = pio.PC_5 -- Data
 local P_CLK_PD  = pio.PG_0 -- Clock pull down
 local P_DATA_PD = pio.PA_7 -- Data pull down
+--]]
+
+-- MBED
+P_CLK     = mbed.pio.P18 -- Clock
+P_DATA    = mbed.pio.P10 -- Data
+P_CLK_PD  = mbed.pio.P19 -- Clock pull down
+P_DATA_PD = mbed.pio.P11 -- Data pull down
 
 function init()
   pio.pin.setdir( pio.OUTPUT, P_CLK_PD, P_DATA_PD )
@@ -114,134 +123,30 @@ function send( data, timer )
   end
 end
 
-function receive( timer )
+function receive()
   enable_communication()
 
-  local count = 0
+  -- local count = 0
   local data = 0
-  local data_out = ""
-  local time
+  -- local data_out = ""
   
-  -- Read 11 bits
-  while true do
-    -- Wait for clock ( or timeout )
-    tmr.setclock( timer, 1 )
-    time = tmr.start( timer )
-    while pio.pin.getval( P_CLK ) ~= 0 do
-      if tmr.gettimediff( timer, time, tmr.read( timer ) ) > 50 then
-        return data_out
+  for i = 1, 11 do
+    while pio.pin.getval( P_CLK ) ~= 1 do -- Wait for next clock
+    end
+
+    if i < 11 then
+      while pio.pin.getval( P_CLK ) ~= 0 do -- Wait for clock to go low
       end
     end
 
-    tmr.delay( timer, 15 )
+    data = bit.rshift( data, 1 )
 
-    -- parity bit
-    if count == 10 then
-      count = count + 1
+    if pio.pin.getval( P_DATA ) == 1 then -- Inset the read bit
+      data = bit.bor( data, bit.bit( 10 ) )
     end
 
-    -- read data
-    if count > 0 and count < 10 then
-      data = bit.rshift( data, 1 )
-      if pio.pin.isset( P_DATA ) then
-        data = bit.bor( data, 1 )
-      end
-
-      count = count + 1
-    end
-
-    -- check if it's the start bit
-    if count == 0 and pio.pin.getval( P_DATA ) == 0 then 
-      count = count + 1
-    end
-
-    -- Wait for clock
-    while pio.pin.getval( P_CLK ) ~= 1 do
-    end
-
-    -- Stop bit
-    if count == 11 then
-      count = 0
-      data_out = data_out .. string.char( data )
-      data = 0
-    end
+    print( i )
   end
 
-  return data_out
+  return data
 end
-
---[[
-function receive( timer, timeout )
-  enable_communication()
-
-  tmr.setclock( timer, 1000 )
-  local tc = tmr.start( timer )
-
-  local read = false
-
-  -- Wait for the keyboard to begin to send, or timeout
-  while not read do
-    if pio.pin.getval( P_CLK ) == 0 and pio.pin.getval( P_DATA ) then
-      read = true
-    end
-
-    tmr.read( timer )
-    if tmr.read( timer ) == timeout + tc then
-      return nil
-    end
-  end
-
-  tmr.setclock( timer, 10000 )
-  tc = tmr.start( timer )
-
-  -- Wait for the clock to go Up or timeout
-  while pio.pin.getval( P_CLK ) == 0 and tmr.read( timer ) - tc < 1 do
-  end
-
-  local data_in = 0
-  local data_out = ""
-  local bits_read = 0
-  
-  -- Data is valid when Clock goes Down
-  while tmr.read( timer ) - tc < 1 do
-    if pio.pin.getval( P_CLK ) == 0 then
-      tc = tmr.start( timer )
-      data_in = bit.lshift( data_in, 1 )
-      data_in = bit.bor( data_in, pio.pin.getval( P_DATA ) )
-      bits_read = bits_read + 1
-    end
-
-    -- Check start bit, end bit, check bit
-    if bits_read == 11 and bit.isset( data_in, 11 ) then -- Start bit 
-      -- If its not 0, something is wrong, clear the bit and ignore
-      bits_read = 10
-      data_in = bit.clear( data_in, 11 )
-    end
-
-    if bits_read == 11 and bit.isclear( data_in, 1 ) then -- Stop bit
-      -- If its not 1, something is wrong, ignore
-      bits_read = 10
-    end
-
-    if bits_read == 11 and parity( bits_read ) ~= bit.band( data_in, 2^9 ) then -- Parity
-      send_invalid_command()
-      bits_read = 0
-    end
-
-    if bits_read == 11 then -- Everithing OK
-      -- Clear bit counter
-      bits_read = 0
-
-      -- Remove extra bits
-      data_in = bit.clear( data_in, 1, 10, 11 )
-      data_in = bit.rshift( data_in, 2 )
-
-      -- Add the received data to the message buffer
-      data_out = data_out .. data_in
-    end
-  end
-
-  return data_out
-end 
---]]
-
