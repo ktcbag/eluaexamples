@@ -10,8 +10,13 @@
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
 
-#define dirOut 0
-#define dirIn 1
+#define DIR_OUT 0
+#define DIR_IN 1
+
+#define IGNORE 1
+#define USE 0
+
+#define ERROR 0
 
 typedef struct sPin
 {
@@ -20,6 +25,11 @@ typedef struct sPin
 
 // Pin Configuration
 tPin P_CLK, P_DATA, P_CLK_PD, P_DATA_PD;
+
+// Start, Stop and Parity bits ignore configuration
+char igStart = USE;
+char igStop = USE;
+char igParity = USE;
 
 static tPin convertPin( int p )
 {
@@ -40,7 +50,7 @@ static void setPinVal( tPin p, char val )
 
 static void setPinDir( tPin p, char dir )
 {
-  if ( dir == dirIn )
+  if ( dir == DIR_IN )
     platform_pio_op( p.port, p.pin, PLATFORM_IO_PIN_DIR_INPUT );
   else
     platform_pio_op( p.port, p.pin, PLATFORM_IO_PIN_DIR_OUTPUT );
@@ -51,16 +61,64 @@ static int getPinVal( tPin p )
   return platform_pio_op( p.port, p.pin, PLATFORM_IO_PIN_GET );
 }
 
+static char checkCRC( unsigned int data )
+{
+  /* Checks the parity bit ( odd parity ) */
+  unsigned int tmp;
+  int i, count;
+
+  count = 0;
+  tmp = data;
+
+  /* Extract data bits */
+  data = data >> 1;
+  data = data & 255;
+
+  /* Count the 1s */
+  for ( i=0; i<8; i++ )
+  {
+    if ( ( data & 1 ) == 1 )
+      count ++;
+
+    data = data >> 1;
+  }
+
+  /* The parity bit is set if there is an even number of 1s  */
+  return ( ( count & 1 ) != ( tmp & 512 ) );
+}
+
+static int keyboard_setflags( lua_State *L )
+{ 
+  /* Start, Stop, Parity */
+  /* Set ignore bits flags */
+  if ( luaL_checkinteger( L, 1 ) )
+    igStart = IGNORE;
+  else
+    igStart = USE;
+
+  if ( luaL_checkinteger( L, 2 ) )
+    igStop = IGNORE;
+  else
+    igStop = USE;
+
+  if ( luaL_checkinteger( L, 3 ) )
+    igParity = IGNORE;
+  else
+    igParity = USE;
+
+  return 0;
+}
+
 static int keyboard_init( lua_State *L )
 {
   P_CLK = convertPin( luaL_checkinteger( L, 1 ) );
   P_DATA = convertPin( luaL_checkinteger( L, 2 ) );
   P_CLK_PD = convertPin( luaL_checkinteger( L, 3 ) );
   P_DATA_PD = convertPin( luaL_checkinteger( L, 4 ) );
-  setPinDir( P_CLK_PD, dirOut );
-  setPinDir( P_DATA_PD, dirOut );
-  setPinDir( P_DATA, dirIn );
-  setPinDir( P_CLK, dirIn );
+  setPinDir( P_CLK_PD, DIR_OUT );
+  setPinDir( P_DATA_PD, DIR_OUT );
+  setPinDir( P_DATA, DIR_IN );
+  setPinDir( P_CLK, DIR_IN );
 
   setPinVal( P_DATA_PD, 1 );
   setPinVal( P_CLK_PD, 1 );
@@ -116,6 +174,31 @@ static int keyboard_receive( lua_State *L )
       data = data | ( 1 << 10 );
   }
 
+  /* lua_pushinteger( L, data ); */
+
+  /* Check start bit */
+  if ( ( ( data & 1 ) == 1 ) && ( igStart == USE ) )
+  {
+    lua_pushinteger( L, ERROR );
+    return 1;
+  }
+
+  /* Check stop bit ( com problema )*/
+  if ( ( ( data & 1024 ) == 0 ) && ( igStop == USE ) )
+  {
+    // lua_pushinteger( L, ERROR );
+    lua_pushinteger( L, 1 );
+    return 1;
+  }
+
+  /* Check CRC bit */
+  if ( ( checkCRC( data ) == 0 ) && ( igParity == USE ) )
+  {
+    // lua_pushinteger( L, ERROR );
+    lua_pushinteger( L, 3 );
+    return 1;
+  }
+
   data = data >> 1;
   data = data & 255;
   lua_pushinteger( L, data );
@@ -123,25 +206,40 @@ static int keyboard_receive( lua_State *L )
   return 1;
 }
 
-
-/*
-static int keyboard_receive( lua_State *L )
+static int keyboard_read( lua_State *L )
 {
-  int p;
-  tPin pin;
+  int qtd = luaL_checkinteger( L, 1 );
+  int i = 0;
+  int c;
 
-  p = luaL_checkinteger( L, 1 );
-  pin = convertPin( p );
+  lua_pop( L, 1 );
 
-  lua_pushinteger( L, getPinVal( pin ) );
+  while ( i < qtd )
+  {
+    keyboard_receive( L );
 
-  return 1;
+    c = luaL_checkinteger( L, 1 );
+    lua_pop( L, 1 );
+
+    if ( c == 28 )
+      printf( "a" );
+    else
+      if ( c == 50 )
+         printf( "b" );
+      else
+        continue;
+
+    i ++;
+  }
+
+  return 0;
 }
-*/
 const LUA_REG_TYPE keyboard_map[] = {
   { LSTRKEY( "clk" ), LFUNCVAL( keyboard_clk ) },
   { LSTRKEY( "init" ), LFUNCVAL( keyboard_init ) },
   { LSTRKEY( "receive" ), LFUNCVAL( keyboard_receive ) },
+  { LSTRKEY( "setflags" ), LFUNCVAL( keyboard_setflags ) },
+  { LSTRKEY( "read" ), LFUNCVAL( keyboard_read ) },
   { LNILKEY, LNILVAL }
 };
 
