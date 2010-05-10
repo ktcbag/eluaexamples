@@ -1,152 +1,72 @@
---------------------------------------------------
---
---   This is an example of how to communicate 
---   with a PS2 pc keyboard.
---   v0.1
---
---   by Thiago Naves, Led Lab, PUC-Rio, march 2010
---
---------------------------------------------------
+local chars = {}
 
--- IO Pins connected to the keyboard
---  LM3S
---[[
-local P_CLK     = pio.PC_7 -- Clock
-local P_DATA    = pio.PC_5 -- Data
-local P_CLK_PD  = pio.PG_0 -- Clock pull down
-local P_DATA_PD = pio.PA_7 -- Data pull down
---]]
+chars[ 0x1C ] = "a"
+chars[ 0x32 ] = "b"
+chars[ 0x21 ] = "c"
+chars[ 0x23 ] = "d"
+chars[ 0x24 ] = "e"
+chars[ 0x2B ] = "f"
+chars[ 0x34 ] = "g"
+chars[ 0x33 ] = "h"
+chars[ 0x43 ] = "i"
+chars[ 0x3B ] = "j"
+chars[ 0x42 ] = "k"
+chars[ 0x4B ] = "l"
+chars[ 0x3A ] = "m"
+chars[ 0x31 ] = "n"
+chars[ 0x44 ] = "o"
+chars[ 0x4D ] = "p"
+chars[ 0x15 ] = "q"
+chars[ 0x2D ] = "r"
+chars[ 0x1B ] = "s"
+chars[ 0x2C ] = "t"
+chars[ 0x3C ] = "u"
+chars[ 0x2A ] = "v"
+chars[ 0x1D ] = "w"
+chars[ 0x22 ] = "x"
+chars[ 0x35 ] = "y"
+chars[ 0x1A ] = "z"
+chars[ 0x29 ] = " "
+-- chars[ 0x5A ] = "\n"
 
--- MBED
-P_CLK     = mbed.pio.P18 -- Clock
-P_DATA    = mbed.pio.P10 -- Data
-P_CLK_PD  = mbed.pio.P19 -- Clock pull down
-P_DATA_PD = mbed.pio.P11 -- Data pull down
+function keyboard_read()
+  local c
+  local shift = false
 
-function init()
-  pio.pin.setdir( pio.OUTPUT, P_CLK_PD, P_DATA_PD )
-  pio.pin.setdir( pio.INPUT, P_CLK, P_DATA )
-  pio.pin.setval( 1, P_DATA_PD, P_CLK_PD )
-end
+  while true do
+    c = keyboard.receive()
 
-function disable_communication( timer )
-  pio.pin.setval( 0, P_CLK_PD )
-  tmr.delay( timer, 110 ) -- Min 100 us
-end
-
-function enable_communication()
-  pio.pin.setval( 1, P_CLK_PD )
-end
-
-function request_send()
-  pio.pin.setval( 0, P_DATA_PD )
-end
-
-function parity( data )
-  local count = 0
-
-  for i= 1, 8 do
-    if bit.isset( data, i ) then
-      count = count + 1
+    -- check if it's the Shift key
+    if ( c == 0x12 ) or ( c == 0x59 ) then -- Shift press
+      shift = true
+    else -- Shift release ( or other key press / release )
+      if c == 0xF0 then
+        c = keyboard.receive()
+        if ( c == 0x12 ) or ( c == 0x59 ) then
+          shift = false
+        end
+      else -- Other keys
+        -- If it's a keyup message, ignore ( 2 bytes )
+        if c == 0xF0 then
+          keyboard.receive()
+        else -- Else, print the Char
+          if c == 0x5A then
+            print( "" )
+          else
+            if shift then
+              term.print( string.upper( chars[ c ] ) )
+            else
+              term.print( chars[ c ] )
+            end
+          end
+        end
+      end
     end
-  end
-
-  return bit.bnot( bit.band( data, 1 ) )
-end
-
-function send( data, timer )
-  -- Request send
-  disable_communication( timer )
-  request_send()
-  enable_communication()
-
-  local c            -- Temporary: Current char
-  local qtd = #data  -- Data length
-
-  for cur = 1, qtd do
-    -- Get current char code
-    c = string.byte( string.sub( data, cur, cur ) )
-
-    -- Send data
-    for cbit = 1, 8 do  
-      print( "  Bit: " .. cbit )
-
-      -- Wait for device to clock to send Data
-      while pio.pin.getval( P_CLK ) ~= 1 do
-      end
-
-      -- Put data bit
-      if bit.isset( c, cbit ) then
-        pio.pin.setval( 0, P_DATA_PD )
-      else
-        pio.pin.setval( 1, P_DATA_PD )
-      end
-
-      -- Wait for clock to get high
-      while pio.pin.getval( P_CLK ) ~= 0 do
-      end
-
-      print( "- Bit: " .. cbit )
-    end
-
-    -- Send parity bit
-      -- Wait for device to clock to send Data
-      while pio.pin.getval( P_CLK ) ~= 1 do
-      end
-
-      -- Put parity bit
-      if parity( c ) == 1 then
-        pio.pin.setval( 0, P_DATA_PD )
-      else
-        pio.pin.setval( 1, P_DATA_PD )
-      end
-
-      -- Wait for clock to get high
-      while pio.pin.getval( P_CLK ) ~= 0 do
-      end
-
-    -- Stop bit 
-    pio.pin.setval( 0, P_DATA_PD )
-
-    -- Wait for acknowledge bit
-      -- Wait for the device to bring Data low
-      while pio.pin.getval( P_DATA ) ~= 1 do
-      end
-
-      -- Wait for the device to bring Clock low
-      while pio.pin.getval( P_CLK ) ~= 1 do
-      end
-
-      -- Wait for the device to release Data and Clock
-      while pio.pin.getval( P_CLK ) ~= 0 or pio.pin.getval( P_DATA ) ~= 0 do
-      end
   end
 end
 
-function receive()
-  enable_communication()
+-- Initialize the IOs
+keyboard.init( mbed.pio.P18, mbed.pio.P10, mbed.pio.P19, mbed.pio.P11 )
 
-  -- local count = 0
-  local data = 0
-  -- local data_out = ""
-  
-  for i = 1, 11 do
-    while pio.pin.getval( P_CLK ) ~= 1 do -- Wait for next clock
-    end
-
-    if i < 11 then
-      while pio.pin.getval( P_CLK ) ~= 0 do -- Wait for clock to go low
-      end
-    end
-
-    data = bit.rshift( data, 1 )
-
-    if pio.pin.getval( P_DATA ) == 1 then -- Inset the read bit
-      data = bit.bor( data, bit.bit( 10 ) )
-    end
-
-    print( i )
-  end
-
-  return data
-end
+-- Ignore stop bit ( buggy keyboard... )
+keyboard.setflags( 0, 1, 0 )
