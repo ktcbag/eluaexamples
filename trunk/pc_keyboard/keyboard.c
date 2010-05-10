@@ -154,7 +154,7 @@ static int keyboard_clk( lua_State *L )
   return 0;
 };
 
-static int keyboard_receive( lua_State *L )
+static char keyboard_getchar( )
 {
   unsigned int data = 0;
 
@@ -179,30 +179,37 @@ static int keyboard_receive( lua_State *L )
   /* Check start bit */
   if ( ( ( data & 1 ) == 1 ) && ( igStart == USE ) )
   {
-    lua_pushinteger( L, ERROR );
-    return 1;
+    /* lua_pushinteger( L, ERROR ); */
+    /* return 1; */
+    return ERROR;
   }
 
   /* Check stop bit ( com problema )*/
   if ( ( ( data & 1024 ) == 0 ) && ( igStop == USE ) )
   {
-    // lua_pushinteger( L, ERROR );
-    lua_pushinteger( L, 1 );
-    return 1;
+    /* lua_pushinteger( L, ERROR ); */
+    /* return 1; */
+    return ERROR;
   }
 
   /* Check CRC bit */
   if ( ( checkCRC( data ) == 0 ) && ( igParity == USE ) )
   {
-    // lua_pushinteger( L, ERROR );
-    lua_pushinteger( L, 3 );
-    return 1;
+    /* lua_pushinteger( L, ERROR ); */
+    /* return 1; */
+    return ERROR;
   }
 
   data = data >> 1;
   data = data & 255;
-  lua_pushinteger( L, data );
+/*  lua_pushinteger( L, data ); */
+  return data;
+/*  return 1; */
+}
 
+static int keyboard_receive( lua_State *L )
+{
+  lua_pushinteger( L, keyboard_getchar () );
   return 1;
 }
 
@@ -210,16 +217,18 @@ static int keyboard_read( lua_State *L )
 {
   int qtd = luaL_checkinteger( L, 1 );
   int i = 0;
-  int c;
+  char c;
 
   lua_pop( L, 1 );
 
   while ( i < qtd )
   {
-    keyboard_receive( L );
+    /* keyboard_receive( L ); */
 
-    c = luaL_checkinteger( L, 1 );
-    lua_pop( L, 1 );
+    /* c = luaL_checkinteger( L, 1 ); */
+    /* lua_pop( L, 1 ); */
+
+    c = keyboard_getchar();
 
     if ( c == 28 )
       printf( "a" );
@@ -228,12 +237,13 @@ static int keyboard_read( lua_State *L )
          printf( "b" );
       else
         continue;
-
     i ++;
   }
 
+  printf( "\n" );
   return 0;
 }
+
 const LUA_REG_TYPE keyboard_map[] = {
   { LSTRKEY( "clk" ), LFUNCVAL( keyboard_clk ) },
   { LSTRKEY( "init" ), LFUNCVAL( keyboard_init ) },
