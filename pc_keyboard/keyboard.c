@@ -1,3 +1,30 @@
+/****************************************************************************/
+/*  pc_keyboard is a ps/2 keyboard driver for eLua ( www.eluaproject.net )  */
+/*                                                                          */
+/*         v0.1, May 2010, by Thiago Naves, LED Lab, PUC-Rio                */
+/*                                                                          */
+/****************************************************************************/
+
+/* Functions */
+
+/*
+   - keyboard_init( Clock, Data, Clock PullDown, Data PullDown )
+   - keyboard_setflags( Start, Stop, Parity )
+   - keyboard_receive()
+   - keyboard_send( Data )
+   - keyboard_setleds( Num Lock, Caps Lock, Scroll Lock )
+   - keyboard_disablekeyevents( Key code, Break, Typematic repeat )
+   - keyboard_configkeys( Key code, Break, Typematic repeat )
+   - keyboard_setRepeatRateAndDelay( rate, delay )
+   - keyboard_setScanCodeSet( Code set )
+   - keyboard_enable()
+   - keyboard_disable()
+   - keyboard_reset()
+   - keyboard_default()
+   - keyboard_resend()
+   - keyboard_echo()
+*/
+
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
@@ -21,6 +48,13 @@
 #define ACK 0xFA
 #define SETLEDS 0xED
 #define ECHO 0xEE
+#define SET_TYPEMATIC_RD 0xF3
+#define SET_SCAN_CODE_SET 0xF0
+#define ENABLE 0xF4
+#define DISABLE 0xF5
+#define DEFAULT 0xF6
+#define RESET 0xFF
+#define RESEND 0xFE
 
 typedef struct sPin
 {
@@ -34,6 +68,15 @@ tPin P_CLK, P_DATA, P_CLK_PD, P_DATA_PD;
 char igStart = USE;
 char igStop = USE;
 char igParity = USE;
+
+/* Returns the absolut value of a number */
+static unsigned int abs( int i )
+{
+  if ( i < 0 )
+    return -i;
+  else
+    return i;
+}
 
 /* Converts a pin number got from the Lua stack to the tPin format */
 static tPin convertPin( int p )
@@ -121,6 +164,7 @@ static char checkCRC( unsigned int data )
 
 /* Set IGNORE flags for Start, Stop and/or Parity bits */
 /* This is due to buggy keyboards */
+/* Lua: keyboard.setflags( Start, Stop, Parity ) */
 static int keyboard_setflags( lua_State *L )
 { 
   /* Start, Stop, Parity */
@@ -144,12 +188,14 @@ static int keyboard_setflags( lua_State *L )
 }
 
 /* Initializes pin directions and default values */
+/* Lua: keyboard.init( Clock, Data, Clock PullDown, Data PullDown ) */
 static int keyboard_init( lua_State *L )
 {
   P_CLK = convertPin( luaL_checkinteger( L, 1 ) );
   P_DATA = convertPin( luaL_checkinteger( L, 2 ) );
   P_CLK_PD = convertPin( luaL_checkinteger( L, 3 ) );
   P_DATA_PD = convertPin( luaL_checkinteger( L, 4 ) );
+
   setPinDir( P_CLK_PD, DIR_OUT );
   setPinDir( P_DATA_PD, DIR_OUT );
   setPinDir( P_DATA, DIR_IN );
@@ -160,34 +206,6 @@ static int keyboard_init( lua_State *L )
 
   return 0;
 }
-
-static int keyboard_clk( lua_State *L )
-{
-  pio_type port, pin;
-  int p;
-
-  // get pin.
-  p = luaL_checkinteger( L, 1 );
-  // validade
-  port = PLATFORM_IO_GET_PORT( p );
-  pin = PLATFORM_IO_GET_PIN( p );
-
-  if( PLATFORM_IO_IS_PORT( p ) ||
-      !platform_pio_has_port( port ) ||
-      !platform_pio_has_pin( port, pin ) )
-  {
-    return luaL_error( L, "pin selection error" );
-  }
-
-  platform_pio_op( port, 1 << pin, PLATFORM_IO_PIN_DIR_OUTPUT );
-
-  while ( 1 )
-  {
-     platform_pio_op( port, 1 << pin, PLATFORM_IO_PIN_SET );
-     platform_pio_op( port, 1 << pin, PLATFORM_IO_PIN_CLEAR );
-  }
-  return 0;
-};
 
 /* Receives a char from the keyboard */
 static char keyboard_getchar( )
@@ -214,7 +232,7 @@ static char keyboard_getchar( )
   if ( ( ( data & 1 ) == 1 ) && ( igStart == USE ) )
     return ERROR;
 
-  /* Check stop bit ( com problema )*/
+  /* Check stop bit */
   if ( ( ( data & 1024 ) == 0 ) && ( igStop == USE ) )
     return ERROR;
 
@@ -230,6 +248,7 @@ static char keyboard_getchar( )
 }
 
 /* Wrapper ( bind ) for keyboard_getchar function */
+/* Lua: keyboard.receive() */
 static int keyboard_receive( lua_State *L )
 {
   lua_pushinteger( L, keyboard_getchar () );
@@ -296,6 +315,7 @@ static void keyboard_write( char data )
 
 /* Bind to keyboard_write function */
 /* Sends a byte to the Keyboard */
+/* Lua: keyboard.send( Data byte ) */
 static int keyboard_send( lua_State *L )
 {
   int i;
@@ -305,6 +325,7 @@ static int keyboard_send( lua_State *L )
 }
 
 /* Sets the Num Lock, Caps Lock and Scroll Lock Leds state */
+/* Lua: keyboard.setleds( Num Lock, Caps Lock, Scroll Lock ) */
 static int keyboard_setleds( lua_State *L )
 {
   int i = 0;
@@ -319,8 +340,9 @@ static int keyboard_setleds( lua_State *L )
 }
 
 /* Configure wich key events the keyboard will send for a given key */
-/* If param == 1 then disable that message */
 /* Params: Key code, Break, Typematic repeat */
+/* If param == 1 then disable that message */
+/* Lua: keyboard.disablekeyevents( Key, Break, Typematic ) */
 static int keyboard_disablekeyevents( lua_State *L )
 {
   #define makeOnly 0xFD
@@ -383,11 +405,14 @@ static int keyboard_disablekeyevents( lua_State *L )
 
   /* Send echo ( ends key list ) */
   keyboard_write( ECHO );
+
+  return 0;
 }
 
 /* Configure wich key events the keyboard will send for all keys */
 /* If param == 1 then enable that message */
-/* Params: Key code, Break, Typematic repeat */
+/* Params: Break, Typematic repeat */
+/* Lua: keyboard.configkeys( Break, Typematic ) */
 static int keyboard_configkeys( lua_State *L )
 {
   #define amakeOnly 0xF9
@@ -414,7 +439,7 @@ static int keyboard_configkeys( lua_State *L )
     return 0;
   }
 
-  /* Discable something ( or not ) */
+  /* Disable something ( or not ) */
 
   if ( ( bk == 0 ) && ( tp == 0 ) ) 
   {
@@ -452,8 +477,182 @@ static int keyboard_configkeys( lua_State *L )
   return 0;
 }
 
+/* Defines the typematic delay and character repeat rate
+ *
+ * Typematic delay is the delay before repeating a character
+ * when a key is hold down.
+ * 
+ * Repeat rate tells how many characters per second will be
+ * sent after that delay 
+ *
+ * Lua: keyboard.setrepeatrateanddelay( rate, delay )
+ */
+static int keyboard_setRepeatRateAndDelay( lua_State *L )
+{
+  int rates[32] = { 300, 267, 240, 218, 207, 185, 171, 160, 150, 133, 120,
+                    109, 100, 92, 86, 80, 75, 67, 60, 55, 50, 46, 43, 40, 
+                    37, 33, 30, 27, 25, 23, 21, 20 };
+
+  int delays[4] = { 250, 500, 750, 1000 };
+
+  unsigned int rate, delay; /* Parameters sent by user */
+  unsigned int i, rDiff, rateId; /* Used to find the rate closest to the param */
+  unsigned int dDiff, delayId;   /* Used to find the delay closest to the param */
+  unsigned int cmd; /* Control byte to send to the keyboard */
+
+  rate = luaL_checkinteger( L, 1 );
+  delay = luaL_checkinteger( L, 2 );
+  
+  /* Find the rate closest to the one passed */
+  rDiff = abs( rate - rates[0] );
+  dDiff = abs( delay - delays[0] );
+  rateId = 0;
+  delayId = 0;
+
+  for ( i=1; i<32; i++ )
+  {
+    if ( abs( rate - rates[i] ) < rDiff )
+    {
+      rDiff = abs( rate - rates[i] );
+      rateId = i;
+    }
+
+    if ( abs( rate - rates[i] ) > rDiff )
+      break;
+  }
+
+  /* Find the delay closest to the one passed */ 
+  for ( i=1; i<4; i++ )
+  {
+    if ( abs( delay - delays[i] ) < dDiff )
+    {
+      dDiff = abs( delay - delays[i] );
+      delayId = i;
+    }
+
+    if ( abs( delay - delays[i] ) > dDiff )
+      break;
+  }
+
+  cmd = rateId;
+  cmd = cmd | delayId << 5; 
+
+  keyboard_write( 0xF3 );
+  keyboard_write( cmd );
+
+  lua_pushinteger( L, rates[ rateId ] );
+  lua_pushinteger( L, delays[ delayId ] );
+
+  return 2;
+}
+
+/* Sets the used Key Scan Code Set ( 1, 2 or 3 )
+ *
+ * Lua: keyboard.setscancodeset( set )
+ */
+static int keyboard_setScanCodeSet( lua_State *L )
+{
+  int i = luaL_checkinteger( L, 1 );
+
+  if ( ( i > 3 ) || ( i < 1 ) )
+    return 0;
+
+  /* Send Command Code */
+  keyboard_write( SET_SCAN_CODE_SET );
+
+  /* Wait for ACK */
+  if ( keyboard_getchar() != ACK )
+    return 0;
+
+  /* Send Scan Set Code */
+  keyboard_write( i );
+
+  return 0;
+}
+
+/* Enables keyboard's key scanning after a disable command
+ *
+ * Lua: keyboard.enable()
+ */
+static int keyboard_enable( lua_State *L )
+{
+  keyboard_write( ENABLE );
+  return 0;
+}
+
+/* Disable keyboard's key scanning ( keyboard stops looking for
+ * pressed keys.
+ *
+ * Note: keyboard will return to the default configuration
+ * ( see keyboard.default() command ).
+ *
+ * Lua: keyboard.disable()
+ */
+static int keyboard_disable( lua_State *L )
+{
+  keyboard_write( DISABLE );
+  return 0;
+}
+
+/* Retuns keyboard to it's default state:
+ * Typematic delay = 500ms
+ * Typematic rate = 10.9 c.p.s
+ * Keyboard sends key Make, Break and Typematic messages
+ * Key Scan Code Set = 2
+ *
+ * Lua: keyboard.default()
+ */
+static int keyboard_default( lua_State *L )
+{
+  keyboard_write( DEFAULT );
+  return 0;
+}
+
+/* Resets the keyboard
+ *
+ * Lua: keyboard.reset()
+ */
+static int keyboard_reset( lua_State *L )
+{
+  keyboard_write( RESET );
+
+  /* Wait for ACK */
+  keyboard_getchar();
+
+  return 0;
+}
+
+/* Keyboards resends last byte, except if it was "resend".
+ * In this case it sends the last non-resend byte.
+ *
+ * Lua: keyboard.resend()
+ */
+static int keyboard_resend( lua_State *L )
+{
+  /* Send command code */
+  keyboard_write( RESEND );
+
+  /* Returns the response */
+  lua_pushinteger( L, keyboard_getchar() );
+  return 1;
+}
+
+/* Keyboard responds with echo ( 0xEE )
+ *
+ * Lua: keyboard.echo()
+ */
+static int keyboard_echo( lua_State *L )
+{
+  /* Sends echo */
+  keyboard_write( ECHO );
+
+  /* Returns the response */
+  lua_pushinteger( L, keyboard_getchar() );
+
+  return 1;
+}
+
 const LUA_REG_TYPE keyboard_map[] = {
-  { LSTRKEY( "clk" ), LFUNCVAL( keyboard_clk ) },
   { LSTRKEY( "init" ), LFUNCVAL( keyboard_init ) },
   { LSTRKEY( "receive" ), LFUNCVAL( keyboard_receive ) },
   { LSTRKEY( "setflags" ), LFUNCVAL( keyboard_setflags ) },
@@ -462,6 +661,18 @@ const LUA_REG_TYPE keyboard_map[] = {
   { LSTRKEY( "setleds" ), LFUNCVAL( keyboard_setleds ) },
   { LSTRKEY( "configkeys" ), LFUNCVAL( keyboard_configkeys ) },
   { LSTRKEY( "disablekeyevents" ), LFUNCVAL( keyboard_disablekeyevents ) },
+  { LSTRKEY( "setrepeatrateanddelay" ), LFUNCVAL( keyboard_setRepeatRateAndDelay) },
+  { LSTRKEY( "setscancodeset" ), LFUNCVAL( keyboard_setScanCodeSet ) },
+  { LSTRKEY( "reset" ), LFUNCVAL( keyboard_reset ) },
+  { LSTRKEY( "enable" ), LFUNCVAL( keyboard_enable ) },
+  { LSTRKEY( "disable" ), LFUNCVAL( keyboard_disable ) },
+  { LSTRKEY( "default" ), LFUNCVAL( keyboard_default ) },
+  { LSTRKEY( "resend" ), LFUNCVAL( keyboard_resend ) },
+  { LSTRKEY( "echo" ), LFUNCVAL( keyboard_echo ) },
+  { LSTRKEY( "ECHO" ), LNUMVAL( ECHO ) },
+  { LSTRKEY( "IGNORE" ), LNUMVAL( IGNORE ) },
+  { LSTRKEY( "USE" ), LNUMVAL( USE ) },
+  { LSTRKEY( "ERROR" ), LNUMVAL( ERROR ) },
   { LNILKEY, LNILVAL }
 };
 

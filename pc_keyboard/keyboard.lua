@@ -69,4 +69,5 @@ end
 keyboard.init( mbed.pio.P18, mbed.pio.P10, mbed.pio.P19, mbed.pio.P11 )
 
 -- Ignore stop bit ( buggy keyboard... )
-keyboard.setflags( 0, 1, 0 )
+-- keyboard.setflags( 0, 1, 0 )
+keyboard.setflags( keyboard.USE, keyboard.IGNORE, keyboard.USE );
