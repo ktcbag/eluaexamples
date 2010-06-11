@@ -1,7 +1,7 @@
 /****************************************************************************/
 /*  pc_keyboard is a ps/2 keyboard driver for eLua ( www.eluaproject.net )  */
 /*                                                                          */
-/*         v0.1, May 2010, by Thiago Naves, LED Lab, PUC-Rio                */
+/*         v0.2, June 2010, by Thiago Naves, LED Lab, PUC-Rio               */
 /*                                                                          */
 /****************************************************************************/
 
@@ -88,8 +88,9 @@ static tPin convertPin( int p )
   return result;
 }
 
-/* Just to make the code easier to read */
-/* Sets a pin value ( 1 / 0 ) */
+/* Just to make the code easier to read
+ * Sets a pin value ( 1 / 0 ) 
+ */
 static void setPinVal( tPin p, char val )
 {
   if ( val )
@@ -98,8 +99,9 @@ static void setPinVal( tPin p, char val )
     platform_pio_op( p.port, p.pin, PLATFORM_IO_PIN_CLEAR );
 }
 
-/* Just to make the code easier to read */
-/* Sets a pin direction ( DIR_IN / DIR_OU ) */
+/* Just to make the code easier to read
+ * Sets a pin direction ( DIR_IN / DIR_OU )
+ */
 static void setPinDir( tPin p, char dir )
 {
   if ( dir == DIR_IN )
@@ -108,8 +110,9 @@ static void setPinDir( tPin p, char dir )
     platform_pio_op( p.port, p.pin, PLATFORM_IO_PIN_DIR_OUTPUT );
 }
 
-/* Just to make the code easier to read */
-/* Returns the current pin value */
+/* Just to make the code easier to read
+ * Returns the current pin value 
+ */
 static int getPinVal( tPin p )
 {
   return platform_pio_op( p.port, p.pin, PLATFORM_IO_PIN_GET );
@@ -162,33 +165,24 @@ static char checkCRC( unsigned int data )
   return ( ( count & 1 ) != ( tmp & 512 ) );
 }
 
-/* Set IGNORE flags for Start, Stop and/or Parity bits */
-/* This is due to buggy keyboards */
-/* Lua: keyboard.setflags( Start, Stop, Parity ) */
+/* Set IGNORE flags for Start, Stop and/or Parity bits
+ * This is due to buggy keyboards
+ * Lua: keyboard.setflags( Start, Stop, Parity )
+ */
 static int keyboard_setflags( lua_State *L )
 { 
   /* Start, Stop, Parity */
   /* Set ignore bits flags */
-  if ( luaL_checkinteger( L, 1 ) )
-    igStart = IGNORE;
-  else
-    igStart = USE;
-
-  if ( luaL_checkinteger( L, 2 ) )
-    igStop = IGNORE;
-  else
-    igStop = USE;
-
-  if ( luaL_checkinteger( L, 3 ) )
-    igParity = IGNORE;
-  else
-    igParity = USE;
+  igStart = luaL_checkinteger( L, 1 );
+  igStop = luaL_checkinteger( L, 2 );
+  igParity = luaL_checkinteger( L, 3 );
 
   return 0;
 }
 
-/* Initializes pin directions and default values */
-/* Lua: keyboard.init( Clock, Data, Clock PullDown, Data PullDown ) */
+/* Initializes pin directions and default values
+ * Lua: keyboard.init( Clock, Data, Clock PullDown, Data PullDown ) 
+ */
 static int keyboard_init( lua_State *L )
 {
   P_CLK = convertPin( luaL_checkinteger( L, 1 ) );
@@ -247,8 +241,9 @@ static char keyboard_getchar( )
   return data;
 }
 
-/* Wrapper ( bind ) for keyboard_getchar function */
-/* Lua: keyboard.receive() */
+/* Wrapper ( bind ) for keyboard_getchar function
+ * Lua: keyboard.receive() 
+ */
 static int keyboard_receive( lua_State *L )
 {
   lua_pushinteger( L, keyboard_getchar () );
@@ -313,9 +308,10 @@ static void keyboard_write( char data )
   }
 }
 
-/* Bind to keyboard_write function */
-/* Sends a byte to the Keyboard */
-/* Lua: keyboard.send( Data byte ) */
+/* Bind to keyboard_write function
+ * Sends a byte to the Keyboard
+ * Lua: keyboard.send( Data byte ) 
+ */
 static int keyboard_send( lua_State *L )
 {
   int i;
@@ -324,8 +320,9 @@ static int keyboard_send( lua_State *L )
   return 0;
 }
 
-/* Sets the Num Lock, Caps Lock and Scroll Lock Leds state */
-/* Lua: keyboard.setleds( Num Lock, Caps Lock, Scroll Lock ) */
+/* Sets the Num Lock, Caps Lock and Scroll Lock Leds state
+ * Lua: keyboard.setleds( Num Lock, Caps Lock, Scroll Lock )
+ */
 static int keyboard_setleds( lua_State *L )
 {
   int i = 0;
@@ -339,10 +336,12 @@ static int keyboard_setleds( lua_State *L )
   return 0;
 }
 
-/* Configure wich key events the keyboard will send for a given key */
-/* Params: Key code, Break, Typematic repeat */
-/* If param == 1 then disable that message */
-/* Lua: keyboard.disablekeyevents( Key, Break, Typematic ) */
+/* Configure wich key events the keyboard will send for a given key
+ * Params: Key code, Break, Typematic repeat
+ * If param == USE then enable that message
+ * If param == IGNORE then ignore that message
+ * Lua: keyboard.disablekeyevents( Key, Break, Typematic )
+ */
 static int keyboard_disablekeyevents( lua_State *L )
 {
   #define makeOnly 0xFD
@@ -360,19 +359,19 @@ static int keyboard_disablekeyevents( lua_State *L )
   tp  = luaL_checkinteger( L, 3 );
 
   /* Send operation code */
-  if ( bk && tp ) 
+  if ( ( bk == IGNORE ) && ( tp == IGNORE ) ) 
   {
     printf( "make only\n" );
     keyboard_write( makeOnly );
   }
 
-  if ( bk && ( tp == 0 ) )
+  if ( ( bk == IGNORE ) && ( tp == USE ) )
   {
     printf( "make type" );
     keyboard_write( makeType );
   }
 
-  if ( tp && ( bk == 0 ) )
+  if ( ( tp == IGNORE ) && ( bk == USE ) )
   {
     printf( "make break" );
     keyboard_write( makeBreak );
@@ -409,10 +408,12 @@ static int keyboard_disablekeyevents( lua_State *L )
   return 0;
 }
 
-/* Configure wich key events the keyboard will send for all keys */
-/* If param == 1 then enable that message */
-/* Params: Break, Typematic repeat */
-/* Lua: keyboard.configkeys( Break, Typematic ) */
+/* Configure wich key events the keyboard will send for all keys
+ * If param == USE then enable that message
+ * If param == IGNORE then ignore that message
+ * Params: Break, Typematic repeat
+ * Lua: keyboard.configkeys( Break, Typematic )
+ */
 static int keyboard_configkeys( lua_State *L )
 {
   #define amakeOnly 0xF9
@@ -441,19 +442,19 @@ static int keyboard_configkeys( lua_State *L )
 
   /* Disable something ( or not ) */
 
-  if ( ( bk == 0 ) && ( tp == 0 ) ) 
+  if ( ( bk == IGNORE ) && ( tp == IGNORE ) ) 
   {
     printf( "make only\n" );
     keyboard_write( amakeOnly );
   }
 
-  if ( ( bk == 0 ) && ( tp == 1 ) )
+  if ( ( bk == IGNORE ) && ( tp == USE ) )
   {
     printf( "make type" );
     keyboard_write( amakeType );
   }
 
-  if ( ( tp == 0 ) && ( bk == 1 ) )
+  if ( ( tp == IGNORE ) && ( bk == USE ) )
   {
     printf( "make break" );
     keyboard_write( amakeBreak );
@@ -637,7 +638,7 @@ static int keyboard_resend( lua_State *L )
   return 1;
 }
 
-/* Keyboard responds with echo ( 0xEE )
+/* Keyboard responds with echo ( keyboard.ECHO - 0xEE )
  *
  * Lua: keyboard.echo()
  */
@@ -673,6 +674,7 @@ const LUA_REG_TYPE keyboard_map[] = {
   { LSTRKEY( "IGNORE" ), LNUMVAL( IGNORE ) },
   { LSTRKEY( "USE" ), LNUMVAL( USE ) },
   { LSTRKEY( "ERROR" ), LNUMVAL( ERROR ) },
+  { LSTRKEY( "ACK" ), LNUMVAL( ACK) },
   { LNILKEY, LNILVAL }
 };
 
