@@ -1,3 +1,10 @@
+-----------------------------------------------------------------------------
+--    This file exemplifies the use of keyboard lib running on a MBED      --
+--    This example implements keyboard_read() function that prints         --
+--    received keys on screen.                                             --
+--    Note: Only letters a ~ z, space, shift and enter keys are            --
+--    implemented. Any other key will break the ( endless ) loop.          --
+
 local chars = {}
 
 chars[ 0x1C ] = "a"
@@ -53,10 +60,15 @@ function keyboard_read()
           if c == 0x5A then
             print( "" )
           else
-            if shift then
-              term.print( string.upper( chars[ c ] ) )
+            if chars[ c] == nil then
+              print( "" )
+              return
             else
-              term.print( chars[ c ] )
+              if shift then
+                term.print( string.upper( chars[ c ] ) )
+              else
+                term.print( chars[ c ] )
+              end;
             end
           end
         end
@@ -67,6 +79,12 @@ end
 
 -- Initialize the IOs
 keyboard.init( mbed.pio.P18, mbed.pio.P10, mbed.pio.P19, mbed.pio.P11 )
+
+-- Pins:
+-- Clock: Pin 18
+-- Data:  Pin 10
+-- Clock Pull Down: Pin 19
+-- Data Pull Down:  Pin 11
 
 -- Ignore stop bit ( buggy keyboard... )
 -- keyboard.setflags( 0, 1, 0 )
