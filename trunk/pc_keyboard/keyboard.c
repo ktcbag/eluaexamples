@@ -8,21 +8,21 @@
 /* Functions */
 
 /*
-   - keyboard_init( Clock, Data, Clock PullDown, Data PullDown )
-   - keyboard_setflags( Start, Stop, Parity )
-   - keyboard_receive()
-   - keyboard_send( Data )
-   - keyboard_setleds( Num Lock, Caps Lock, Scroll Lock )
-   - keyboard_disablekeyevents( Key code, Break, Typematic repeat )
-   - keyboard_configkeys( Key code, Break, Typematic repeat )
-   - keyboard_setRepeatRateAndDelay( rate, delay )
-   - keyboard_setScanCodeSet( Code set )
-   - keyboard_enable()
-   - keyboard_disable()
-   - keyboard_reset()
-   - keyboard_default()
-   - keyboard_resend()
-   - keyboard_echo()
+   - keyboard.init( Clock, Data, Clock PullDown, Data PullDown )
+   - keyboard.setflags( Start, Stop, Parity )
+   - keyboard.receive()
+   - keyboard.send( Data )
+   - keyboard.setleds( Num Lock, Caps Lock, Scroll Lock )
+   - keyboard.disablekeyevents( Key code, Break, Typematic repeat )
+   - keyboard.configkeys( Break, Typematic repeat )
+   - keyboard.setrepeatrateanddelay( rate, delay )
+   - keyboard.setscancodeset( Code set )
+   - keyboard.enable()
+   - keyboard.disable()
+   - keyboard.reset()
+   - keyboard.default()
+   - keyboard.resend()
+   - keyboard.echo()
 */
 
 #include "lua.h"
@@ -250,29 +250,6 @@ static int keyboard_receive( lua_State *L )
   return 1;
 }
 
-/*
-static int keyboard_read( lua_State *L )
-{
-  char c;
-  int qtd = 0;
-
-  while ( 1 )
-  {
-    c = keyboard_getchar();
-
-    if ( c == 28 )
-      lua_pushchar( "a" )
-      printf( "a" );
-    else
-      if ( c == 50 )
-         printf( "b" );
-  }
-
-  printf( "\n" );
-  return 0;
-}
-*/
-
 /* Sends data to the keyboard */
 static void keyboard_write( char data )
 {
@@ -361,19 +338,16 @@ static int keyboard_disablekeyevents( lua_State *L )
   /* Send operation code */
   if ( ( bk == IGNORE ) && ( tp == IGNORE ) ) 
   {
-    printf( "make only\n" );
     keyboard_write( makeOnly );
   }
 
   if ( ( bk == IGNORE ) && ( tp == USE ) )
   {
-    printf( "make type" );
     keyboard_write( makeType );
   }
 
   if ( ( tp == IGNORE ) && ( bk == USE ) )
   {
-    printf( "make break" );
     keyboard_write( makeBreak );
   }
 
@@ -428,7 +402,6 @@ static int keyboard_configkeys( lua_State *L )
   tp  = luaL_checkinteger( L, 2 );
 
   /* Enable all */
-  printf( "make break" );
   keyboard_write( amakeBreakType );
 
   /* Wait for ACK */
@@ -444,29 +417,17 @@ static int keyboard_configkeys( lua_State *L )
 
   if ( ( bk == IGNORE ) && ( tp == IGNORE ) ) 
   {
-    printf( "make only\n" );
     keyboard_write( amakeOnly );
   }
 
   if ( ( bk == IGNORE ) && ( tp == USE ) )
   {
-    printf( "make type" );
     keyboard_write( amakeType );
   }
 
   if ( ( tp == IGNORE ) && ( bk == USE ) )
   {
-    printf( "make break" );
     keyboard_write( amakeBreak );
-  }
-
-  /* Wait for ACK */
-  ret = keyboard_getchar();
-
-  if ( ret != ACK )
-  {
-    printf( "Error: No ACK ! " );
-    return 0;
   }
 
   /* Send echo ( ends key list ) */
@@ -657,7 +618,6 @@ const LUA_REG_TYPE keyboard_map[] = {
   { LSTRKEY( "init" ), LFUNCVAL( keyboard_init ) },
   { LSTRKEY( "receive" ), LFUNCVAL( keyboard_receive ) },
   { LSTRKEY( "setflags" ), LFUNCVAL( keyboard_setflags ) },
-//  { LSTRKEY( "read" ), LFUNCVAL( keyboard_read ) },
   { LSTRKEY( "send" ), LFUNCVAL( keyboard_send ) },
   { LSTRKEY( "setleds" ), LFUNCVAL( keyboard_setleds ) },
   { LSTRKEY( "configkeys" ), LFUNCVAL( keyboard_configkeys ) },
