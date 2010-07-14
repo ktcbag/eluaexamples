@@ -13,7 +13,7 @@ This will be an plataform independent driver called imag.c that won't do
 anything cool, just return a number. It will be placed at 'src/modules' with
 the other platform independet drivers and it will go like this:
 
-/*>> Begin of file*/
+{{{/*>> Begin of file*/
 
 /* Not shure if all they are all necessary, but it works like this. */
 #include "lua.h"
@@ -63,6 +63,7 @@ LUALIB_API int luaopen_imag( lua_State *L ){
 }
 
 /* >> End of file */
+}}}
 
 Congratulations, you've finished your eLua module! BUT! There are some more
 steps to do to make it work. =(.
@@ -93,6 +94,7 @@ _ROM( AUXLIB_IMAG, luaopen_imag, imag_map ) to #define LUA_PLATFORM_LIBS_ROM
 
 like this:
 
+{{{
 /* Code part */
 
 #define LUA_PLATFORM_LIBS_ROM\
@@ -111,6 +113,7 @@ like this:
   _ROM( AUXLIB_IMAG, luaopen_imag, imag_map )
 
 /* End of Code */
+}}}
 
 Now your module is ready to go! Good luck. =)
 If it didn't work, or you have any questions send an email to the eLua list.
