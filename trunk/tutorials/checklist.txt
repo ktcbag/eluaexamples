@@ -33,17 +33,12 @@ LUALIB_API int luaopen_hd44780( lua_State *L )
 
 #####################################
 
-3: put:
+3: add at src/modules/auxmods.h
 #define AUXLIB_HD44780 "hd44780"
 LUALIB_API int ( luaopen_hd44780 )( lua_State *L );
-at src/modules/auxmods.h
 
-4: put:
+4: add at src/platform/lpc17xx/platform_conf.h
 _ROM( AUXLIB_HD44780, luaopen_hd44780, hd44780_map )
-at src/platform/lpc17xx/platform_conf.h
 
-5: put:
-hd44780.c
-at module_names variable
-in SConstruct
-( like: module_names = " ... hd44780.c" )
+5: add in SConstruct, at `module_names' variable the name of your .c file
+like: module_names = " ... hd44780.c"
