@@ -13,7 +13,8 @@ This will be an plataform independent driver called imag.c that won't do
 anything cool, just return a number. It will be placed at 'src/modules' with
 the other platform independet drivers and it will go like this:
 
-{{{/*>> Begin of file*/
+{{{
+/*>> Begin of file*/
 
 /* Not shure if all they are all necessary, but it works like this. */
 #include "lua.h"
