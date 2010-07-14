@@ -2,21 +2,21 @@
 
 = Making C Modules =
 
-This tutorial has the objective to teatch you step by step how to make a
+This tutorial has the objective to teach you step by step how to make a
 eLua C module and put it on the romtable. It will not teach how to do a 
 normal Lua bind, there are a lot of good tutorials about this on the
 internet.
 
 1:
 so... lets start with an imaginary driver that will be used as an example.
-This will be an plataform independent driver called imag.c that won't do
+This will be an platform independent driver called imag.c that won't do
 anything cool, just return a number. It will be placed at 'src/modules' with
-the other platform independet drivers and it will go like this:
+the other platform independent drivers and it will go like this:
 
 {{{
 /*>> Begin of file*/
 
-/* Not shure if all they are all necessary, but it works like this. */
+/* Not sure if all they are all necessary, but it works like this. */
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
@@ -36,12 +36,12 @@ static int imag_dostuff( lua_State *L ){
 /* Our magic constant */
 #define IMAG_MAGICNUMBER 43
 
-/* Here is the definition of the Romtable. Note the macros that we dont have
+/* Here is the definition of the Romtable. Note the macros that we don't have
  * in normal Lua. They are features introduced in eLua to make possible the
  * registration not only of functions but constants as well. These macros are
- * important, remeber that we're not using a luaL_Reg as in normal Lua.
+ * important, remember that we're not using a luaL_Reg as in normal Lua.
  * So remember to use them.
- * For more about this goto 'src/lua/lrodefs.h' & 'src/lua/lrotable.h'.
+ * For more about this go to 'src/lua/lrodefs.h' & 'src/lua/lrotable.h'.
  */
 const LUA_REG_TYPE imagi_map[] = {
 	{ LSTRKEY( "dostuff" ), LFUNCVAL( imag_dostuff ) },
@@ -83,10 +83,10 @@ ones already there. In this case:
 LUALIB_API int ( luaopen_imag )( lua_State *L );
 
 4:
-By the time this tutorial was writen, there wasn't any place to say that our
+By the time this tutorial was written, there wasn't any place to say that our
 module wants to go to rom in a platform independent way. Because of this, 
-I've placed it definition under a spcefific platform. It is possible to put
-the same definition for all the platforms, but hopfuly it will be changed
+I've placed it definition under a specific platform. It is possible to put
+the same definition for all the platforms, but hopefully it will be changed
 by the time you read this. So...
 
 As an example I'll put it under lpc17xx. So edit the
