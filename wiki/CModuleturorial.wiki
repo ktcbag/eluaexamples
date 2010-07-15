@@ -2,7 +2,7 @@ Obs: This is a preliminary text for a tutorial that will probably go to the eLua
 
 #How to make a C module.
 
-= Making C Modules =
+= Writing a generic/platform-independent eLua C module =
 
 This is a step by step tutorial on how to make an eLua C module and put it on a romtable. It will not teach how to do a normal Lua bind, because there are lots of good tutorials about this on the internet.
 
