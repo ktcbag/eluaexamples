@@ -4,16 +4,13 @@ Obs: This is a preliminary text for a tutorial that will probably go to the eLua
 
 = Making C Modules =
 
-This tutorial has the objective to teach you step by step how to make a
-eLua C module and put it on the romtable. It will not teach how to do a 
-normal Lua bind, there are a lot of good tutorials about this on the
-internet.
+This is a step by step tutorial on how to make an eLua C module and put it on a romtable. It will not teach how to do a normal Lua bind, because there are lots of good tutorials about this on the internet.
 
 1:
-so... lets start with an imaginary driver that will be used as an example.
-This will be an platform independent driver called imag.c that won't do
+So, as an example, lets say you want to write a C driver for a device and add it to your eLua image, together with a Lua bind, so it can be used by a Lua program.
+This will be a platform independent driver called imag.c that won't do
 anything cool, just return a number. It will be placed at 'src/modules' with
-the other platform independent drivers and it will go like this:
+the other generic (platform independent) drivers and it will go like this:
 
 {{{
 /*>> Begin of file*/
@@ -29,7 +26,7 @@ the other platform independent drivers and it will go like this:
 #define MIN_OPT_LEVEL 2
 #include "lrodefs.h"
 
-/* Our idiotic function */
+/* Our example idiotic function */
 static int imag_dostuff( lua_State *L ){
 	lua_pushinteger( L, 43 );
 	return 1;
@@ -54,7 +51,7 @@ const LUA_REG_TYPE imagi_map[] = {
 /* Now we have another tricky part, here you have 2 possible registrations of
  * your module. The first case, the '#if LUA_OPTIMIZE_MEMORY > 0', we get 
  * all of this on the romtable, so... Nothing to register.
- * The '#else' part we register it like in Lua at ram.
+ * The '#else' part we register it like in Lua and the function and constant will live in RAM.
  */
 LUALIB_API int luaopen_imag( lua_State *L ){
 #if LUA_OPTIMIZE_MEMORY > 0
@@ -93,7 +90,10 @@ by the time you read this. So...
 
 As an example I'll put it under lpc17xx. So edit the
 'src/platform/lpc17xx/platform_conf.h' and add:
-_ROM( AUXLIB_IMAG, luaopen_imag, imag_map ) to #define LUA_PLATFORM_LIBS_ROM
+
+_ROM( AUXLIB_IMAG, luaopen_imag, imag_map ) 
+
+to #define LUA_PLATFORM_LIBS_ROM
 
 like this:
 
@@ -118,9 +118,8 @@ like this:
 /* End of Code */
 }}}
 
-Now your module is ready to go! Good luck. =)
-If it didn't work, or you have any questions send an email to the eLua list.
-<elua-dev@lists.berlios.de>
+Now your module will be built with eLua! Good luck. =)
+If you still have problems or questions, pls feel free to send an email to the eLua list. You can register at https://lists.berlios.de/mailman/listinfo/elua-dev
 
 Best,
-eLua Team.
+Marcelo Politzer.
