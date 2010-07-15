@@ -119,6 +119,11 @@ like this:
 }}}
 
 Now your module will be built with eLua! Good luck. =)
+
+The main eLua site has some more information on this at:
+http://www.eluaproject.net/en_building.html
+http://www.eluaproject.net/en_arch_ltr.html
+
 If you still have problems or questions, pls feel free to send an email to the eLua list. You can register at https://lists.berlios.de/mailman/listinfo/elua-dev
 
 Best,
