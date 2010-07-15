@@ -2,6 +2,7 @@ Obs: This is a preliminary text for a tutorial that will probably go to the eLua
 
 
 = Writing a generic/platform-independent eLua C module =
+by Marcelo Politzer
 
 This is a step by step tutorial on how to make an eLua C module and put it on a romtable. It will not teach how to do a normal Lua bind, because there are lots of good tutorials about this on the internet.
 
@@ -125,5 +126,7 @@ http://www.eluaproject.net/en_arch_ltr.html
 
 If you still have problems or questions, pls feel free to send an email to the eLua list. You can register at https://lists.berlios.de/mailman/listinfo/elua-dev
 
+Enjoy eLua !!!
+
 Best,
-Marcelo Politzer.
+Marcelo
