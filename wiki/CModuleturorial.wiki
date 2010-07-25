@@ -1,4 +1,5 @@
-Obs: This is a preliminary text for a tutorial that will probably go to the eLua User Labs wiki.eluaproject.net. The information here is not complete or "official" yet.
+Obs: This is a preliminary text for a tutorial that is now being maintained on the eLua User Labs wiki.eluaproject.net at http://wiki.eluaproject.net/Tutorials/cmodules
+
 
 
 = Writing a generic/platform-independent eLua C module =
